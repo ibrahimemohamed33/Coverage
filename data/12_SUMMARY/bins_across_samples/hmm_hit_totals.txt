@@ -1,0 +1,2 @@
+bins	Ribosomal_RNAs
+ALL_SPLITS	2
