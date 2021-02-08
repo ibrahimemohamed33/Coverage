@@ -5,36 +5,39 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class Coverage:
-    def __init__(self, directory, file, *args):
+    def __init__(self, directory, norm, index, file):
         '''
         Initializes the Coverage class that is used to ...
 
         Inputs:
             directory (str): the desired directory of your data
             file (str): the file containing the data
+            norm (bool): if values should be normalized, where the norm is defined 
+            to be 
+                            a_i/(\sum \limits_{j = 1}^n a_j)
+            index (str): the preferred column name to index
+
         '''
+        if not type(directory) == type(index) == type(file) and isinstance(norm, bool):
+            raise Exception("""Your directory, index, and file need to be a string
+                                and your norm should be boolean""")
+        
         self.directory = directory
         self.file = file
-        self.args = args
+        self.index = index
+        self.dataframe = self.load_dataframe(self.index, norm)
 
 
-    def load_dataframe(self, index, norm=False, sort=False, output=True):
+    def load_dataframe(self, index, norm=False, sort=False):
         '''
         Loads the dataframe and includes coverage values of genes within samples
         Inputs:
             index (str): the preferred column that indexes the dataframe
-            norm (bool): if values should be normalized, where the norm is
-            defined to be 
-                            a_i/(a_1 + ... + a_i + ... + a_n)
+            
+           
             sort (bool): sorts the dataframe by genes with high coverage values
             output (bool): if the function should return the dataframe
         '''
-        self.index = index
-        try:
-            isinstance(self.file, str)
-        except:
-            form = type(self.file)
-            Exception('Your file is a {} and needs to be a string :/'.format(form))
 
         path = os.path.join(self.directory, self.file)
         df = pd.read_csv(path,sep = '\t').set_index(self.index)
@@ -42,12 +45,11 @@ class Coverage:
             df = df/df.sum()
         if sort:
             df = df.sort_values(by=list(df.columns),axis=0)
-        self.dataframe = df
-        if output:
-            return self.dataframe
+        return df
+        
     
 
-    def export(self, name):
+    def export(self, name='data.txt'):
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
         df = t.transpose()
@@ -74,6 +76,7 @@ class Coverage:
 
         sns.heatmap(data=self.dataframe, vmax=maximum, vmin=minimum, 
                     cmap=cmap).invert_yaxis()
+
 
     def filter_samples(self, filter=None):
         df = self.load_dataframe(self.index)
