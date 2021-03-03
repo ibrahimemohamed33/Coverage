@@ -5,56 +5,69 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class Coverage:
-    def __init__(self, directory, norm, index, file):
+    def __init__(self, directory, f, index='gene_callers_id', 
+                 norm=True, sort=False, filter=0, _sep='\t'):
         '''
         Initializes the Coverage class that is used to ...
 
         Inputs:
             directory (str): the desired directory of your data
-            file (str): the file containing the data
-            norm (bool): if values should be normalized, where the norm is defined 
-            to be 
+            f (str): the file containing the data
+            norm (bool): if values within a metagenome sample should be 
+            normalized, where the norm is defined as 
                             a_i/(\sum \limits_{j = 1}^n a_j)
+
             index (str): the preferred column name to index
 
         '''
-        if not type(directory) == type(index) == type(file) and isinstance(norm, bool):
-            raise Exception("""Your directory, index, and file need to be a string
-                                and your norm should be boolean""")
+
+        if not (type(directory) == type(f)) and isinstance(norm, bool):
+            raise Exception("""Directory, index, and file need to be a string
+                                and norm should be boolean value""")
         
         self.directory = directory
-        self.file = file
-        self.index = index
-        self.dataframe = self.load_dataframe(self.index, norm)
+        self.file = f
+        self.norm = norm
+        self.sort = sort
 
+        self.dataframe = self.load_dataframe(index, _sep)
+        self.filtered_sample = self.filter_samples(filter)
 
-    def load_dataframe(self, index, norm=False, sort=False):
+    def load_dataframe(self, index, _sep):
         '''
         Loads the dataframe and includes coverage values of genes within samples
         Inputs:
             index (str): the preferred column that indexes the dataframe
-            
-           
-            sort (bool): sorts the dataframe by genes with high coverage values
-            output (bool): if the function should return the dataframe
         '''
-
-        path = os.path.join(self.directory, self.file)
-        df = pd.read_csv(path,sep = '\t').set_index(self.index)
-        if norm:
-            df = df/df.sum()
-        if sort:
-            df = df.sort_values(by=list(df.columns),axis=0)
-        return df
         
+        path = os.path.join(self.directory, self.file)
+        df = pd.read_csv(path, sep = _sep).set_index(index)
+        if self.norm:
+            df = df/df.sum()
+        if self.sort:
+            df = df.sort_values(by=list(df.columns),axis=0) 
+        return df
     
+
+    def filter_samples(self, filter=0):
+        '''
+        Filters samples in a pandas dataframe based on filter value
+
+        Input:
+            filter (float): preferred filter value
+            output (bool): whether the filtered dataframe should be outputted
+        '''
+        df = self.dataframe
+        criteria = df.median() >= filter
+        return df[criteria.index[criteria]]
+
 
     def export(self, name='data.txt'):
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
         df = t.transpose()
-        df.to_csv(name, sep='\t')
-    
+        df.to_csv(name, path_or_buf= self.directory, sep='\t')
+
 
     def plot_values(self, x_axis, metagenome, kind, labels, color):
         x_label, y_label, title = labels
@@ -76,12 +89,4 @@ class Coverage:
 
         sns.heatmap(data=self.dataframe, vmax=maximum, vmin=minimum, 
                     cmap=cmap).invert_yaxis()
-
-
-    def filter_samples(self, filter=None):
-        df = self.load_dataframe(self.index)
-        self.dataframe = df.loc[:, df.median() > filter]
-
-
-
 

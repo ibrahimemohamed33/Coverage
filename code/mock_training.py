@@ -1,75 +1,68 @@
 import os
-import shutil
 import csv
-import numpy as np
-from random import randint, uniform 
+
+from numpy.random import uniform
+from shutil import move 
+
+class MockData:
+
+    def __init__(self, file='Untitled.csv', rows=100, columns=100):
+        '''
+        Initializes the MockData class
+
+        Inputs:
+            file (str): the name of the mockdata file
+            rows, columns (int): the desired number of rows and columns 
+
+        '''
+        self.file = file
+        self.rows = rows
+        self.columns = columns
+
+    def _export(self, directory=None, folder_name='folder'):
+        '''
+        Helper function that moves one file to folder_name and puts
+        the associated training data there. 
+        Inputs:
+            directory (str): directory path
+            folderName (str): preferred name for folder
+        '''
+        if not directory:
+            directory = os.getcwd()
+        new_path = os.path.join(directory, folder_name)
+        if not os.path.isdir(new_path):
+            os.mkdir(new_path)
+        move(self.file, new_path)
 
 
-def _export(file, directory=None, folderName='folder'):
-    '''
-    Helper function that moves one file to a new folder named 'folder' and puts
-    the associated training data there. 
-    Inputs:
-        file (str): name of file
-        directory (str): directory path
-        folderName (str): preferred name for folder
-    '''
+    def generate_data(self, directory=None, index= 'gene_callers_id', 
+                      folder_name='folder'):
+        '''
+        Creates a csv file and uses the helper functions to input the data and
+        export it into the desired path
 
-    if not directory:
-        directory = os.getcwd()
-    newPath = os.path.join(directory, folderName)
-    if not os.path.isdir(newPath):
-        os.mkdir(newPath)
+        Inputs:
+            directory (str): directory path
+            folderName (str): preferred name for folder
+            index (str): preferred index
+        '''
+        #creates the column names
+        metagenomes = ['metagenome_%d' %(i) for i in range(self.columns)]
+        metagenomes.insert(0, index)
+        #generates the rows of randomized data 
+        coverage_values = []
+        for j in range(self.rows):
+            gene_name = 'gene__%d' %(j)
+            coverage = list(uniform(0,1,self.columns))
+            coverage.insert(0, gene_name)
+            coverage_values.append(coverage)
 
-    shutil.move(file, newPath)
+        with open(self.file, 'w', ) as f:
+            write = csv.writer(f, delimiter=',')
+            # writes out the name of the columns and gene's coverage values
+            write.writerow(metagenomes)
+            write.writerows(coverage_values)
 
-def _rows_and_columns(rows=1, columns=1):
-    '''
-    Helper function that creates the columns of the training data and then 
-    uses numpy's random, uniform distribution to calculate the coverage values
-    for a dummy gene. 
+        self._export(directory, folder_name)
 
-    Inputs: 
-        rows, columns (int): the desired number of rows and columns
-    '''
-
-    metagenomes = ['metagenome_%d' %(i) for i in range(columns)]
-    # Separates the columns into a readable .csv file
-    metagenomes.insert(0, None)
-
-    # List of lists that contain each gene's associated coverage value 
-    coverage_values = []
-    for j in range(rows):
-        gene_name = 'gene__%d' %(j)
-        coverage = list(np.random.uniform(0,1,columns))
-        coverage.insert(0, gene_name)
-        coverage_values.append(coverage)
-    
-    return metagenomes, coverage_values
-
-def generate_data(rows=1, columns=1, file='untitled.csv', directory=None, 
-                  folderName='folder'):
-
-    '''
-    Creates a csv file and uses the helper functions to input the data and
-    export it into the desired path
-
-    Inputs:
-        rows, columns (int): the desired number of rows and columns
-        file (str): name of file
-        directory (str): directory path
-        folderName (str): preferred name for folder
-    Outputs:
-        data (csv file): a csv file that contains mock data of a gene's coverage
-                        values
-    '''
-
-    metagenomes, coverage_values = _rows_and_columns(rows, columns)
-    with open(file, 'w', ) as f:
-        write = csv.writer(f, delimiter=',')
-        # writes out the name of the columns and the gene's coverage values
-        write.writerow(metagenomes)
-        write.writerows(coverage_values)
-
-    _export(file, directory, folderName)
-  
+   
