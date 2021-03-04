@@ -1,2 +1,0 @@
-bins	taxon	total_length	num_contigs	N50	GC_content	percent_completion	percent_redundancy
-ALL_SPLITS	Unknown	1395997	1	1395997	29.1055288038	98.59154929577464	0.0

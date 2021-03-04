@@ -1,2 +1,0 @@
-bins	Archaeal_16S_rRNA	Archaeal_23S_rRNA	Archaeal_5S_rRNA	Archaeal_5_8S_rRNA	Bacterial_16S_rRNA	Bacterial_23S_rRNA	Bacterial_5S_rRNA	Eukaryotic_28S_rRNA	Eukaryotic_5S_rRNA	Eukaryotic_5_8S_rRNA	Mitochondrial_12S_rRNA	Mitochondrial_16S_rRNA
-ALL_SPLITS	0	0	0	0	1	1	0	0	0	0	0	0
