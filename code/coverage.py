@@ -4,21 +4,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from mock_training import MockData
+
 class Coverage:
-    def __init__(self, directory, f, index='gene_callers_id', 
-                 norm=True, sort=False, filter=0, _sep='\t'):
+    def __init__(self, directory, f=None, index='gene_callers_id', 
+                 norm=True, sort=False, filter=0, separator=None, mock=False,
+                 folder='folder', rows=100, columns=100):
         '''
-        Initializes the Coverage class that is used to ...
+        Initializes the Coverage class
 
         Inputs:
             directory (str): the desired directory of your data
-            f (str): the file containing the data
+            f (str): the name of the file
             norm (bool): if values within a metagenome sample should be 
             normalized, where the norm is defined as 
                             a_i/(\sum \limits_{j = 1}^n a_j)
 
             index (str): the preferred column name to index
-
         '''
 
         if not (type(directory) == type(f)) and isinstance(norm, bool):
@@ -26,22 +28,33 @@ class Coverage:
                                 and norm should be boolean value""")
         
         self.directory = directory
-        self.file = f
         self.norm = norm
         self.sort = sort
 
-        self.dataframe = self.load_dataframe(index, _sep)
+        if mock:
+            self.mock = MockData(f=f, directory=directory, rows=rows, 
+                                columns=columns, folder_name=folder)
+
+            self.mock.generate_data(index)
+            self.folder = folder
+            self.file = self.mock.file
+
+        else:
+            self.file = f
+        
+        self.dataframe = self.load_dataframe(index, separator,mock=mock)
         self.filtered_sample = self.filter_samples(filter)
 
-    def load_dataframe(self, index, _sep):
+    def load_dataframe(self, index, _sep, mock=False):
         '''
         Loads the dataframe and includes coverage values of genes within samples
         Inputs:
             index (str): the preferred column that indexes the dataframe
         '''
-        
+        if mock:
+            self.directory = os.path.join(self.directory, self.folder)
         path = os.path.join(self.directory, self.file)
-        df = pd.read_csv(path, sep = _sep).set_index(index)
+        df = pd.read_csv(path, sep=_sep).set_index(index)
         if self.norm:
             df = df/df.sum()
         if self.sort:
@@ -57,16 +70,26 @@ class Coverage:
             filter (float): preferred filter value
             output (bool): whether the filtered dataframe should be outputted
         '''
+
         df = self.dataframe
-        criteria = df.median() >= filter
+        criteria = (df.median() >= filter)
         return df[criteria.index[criteria]]
 
 
-    def export(self, name='data.txt'):
+    def export(self, export_directory=None, name='data.txt'):
+        '''
+        Exports the dataframe into a .txt file for anvi'o
+
+        Inputs:
+            export_directory (str): desired directory
+
+        '''
+        if export_directory is None:
+            export_directory = os.getcwd()
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
         df = t.transpose()
-        df.to_csv(name, path_or_buf= self.directory, sep='\t')
+        df.to_csv(os.path.join(export_directory, name), sep='\t')
 
 
     def plot_values(self, x_axis, metagenome, kind, labels, color):

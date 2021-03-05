@@ -1,42 +1,46 @@
-import os
 import csv
+import random
 
-from numpy.random import uniform
-from shutil import move 
+from os import getcwd as working_directory
+from paths import FileManage
+from numpy.random import uniform, choice
 
 class MockData:
-
-    def __init__(self, file='Untitled.csv', rows=100, columns=100):
+    def __init__(self, f='Untitled.csv', folder_name='folder', 
+                directory=working_directory, rows=100, columns=100):
         '''
         Initializes the MockData class
 
         Inputs:
-            file (str): the name of the mockdata file
+            f (str): the name of the mockdata file
             rows, columns (int): the desired number of rows and columns 
 
         '''
-        self.file = file
         self.rows = rows
         self.columns = columns
+        self.manage = FileManage(directory=directory, folder=folder_name, 
+                                 file_name=f)
+        self.file = self.manage.file_name
+    
+    def interval_generator(self):
+        classifiers = ['Core', 'Accessory', 'Absent', 'Non-Specific']
+        # Currently incomplete but uses Evan K.'s classification in one specific
+        # sample. From there, I decided to evenly divide the distribution between 
+        # the rest of the remaining classifiers
+        probabilities = [0.54, .154, .153, .153]
+        alpha = choice(classifiers, 1, p=probabilities)
 
-    def _export(self, directory=None, folder_name='folder'):
-        '''
-        Helper function that moves one file to folder_name and puts
-        the associated training data there. 
-        Inputs:
-            directory (str): directory path
-            folderName (str): preferred name for folder
-        '''
-        if not directory:
-            directory = os.getcwd()
-        new_path = os.path.join(directory, folder_name)
-        if not os.path.isdir(new_path):
-            os.mkdir(new_path)
-        move(self.file, new_path)
+        if alpha == 'Core':
+            interval = (0.6, 1.0)
+        elif alpha == 'Accessory':
+            interval = (0.2, 0.6)
+        elif alpha == 'Absent':
+            interval = (0.0, 0.2)
+        else:
+            interval = (0.0, 1.0)
 
-
-    def generate_data(self, directory=None, index= 'gene_callers_id', 
-                      folder_name='folder'):
+        return interval
+    def generate_data(self, index='gene_callers_id'):
         '''
         Creates a csv file and uses the helper functions to input the data and
         export it into the desired path
@@ -53,16 +57,17 @@ class MockData:
         coverage_values = []
         for j in range(self.rows):
             gene_name = 'gene__%d' %(j)
-            coverage = list(uniform(0,1,self.columns))
+            a, b = self.interval_generator()
+            coverage = list(uniform(a, b, self.columns))
             coverage.insert(0, gene_name)
             coverage_values.append(coverage)
 
-        with open(self.file, 'w', ) as f:
+        with open(self.file, 'w') as f:
             write = csv.writer(f, delimiter=',')
             # writes out the name of the columns and gene's coverage values
             write.writerow(metagenomes)
             write.writerows(coverage_values)
 
-        self._export(directory, folder_name)
+        self.manage.move_file()
 
    
