@@ -7,9 +7,9 @@ import seaborn as sns
 from mock_training import MockData
 
 class Coverage:
-    def __init__(self, directory, f=None, index='gene_callers_id', 
+    def __init__(self, directory, f='Untitled.csv', index='gene_callers_id', 
                  norm=True, sort=False, filter=0, separator=None, mock=False,
-                 folder='folder', rows=100, columns=100):
+                 folder_name='folder', rows=100, columns=100):
         '''
         Initializes the Coverage class
 
@@ -27,23 +27,25 @@ class Coverage:
             raise Exception("""Directory, index, and file need to be a string
                                 and norm should be boolean value""")
         
-        self.directory = directory
         self.norm = norm
         self.sort = sort
 
         if mock:
-            self.mock = MockData(f=f, directory=directory, rows=rows, 
-                                columns=columns, folder_name=folder)
+            self.mock = MockData(directory=directory, rows=rows, 
+                                 columns=columns, folder_name=folder_name)
 
             self.mock.generate_data(index)
-            self.folder = folder
+            self.folder = folder_name
             self.file = self.mock.file
+            self.directory = self.mock.directory
 
         else:
             self.file = f
+            self.directory = directory
         
         self.dataframe = self.load_dataframe(index, separator,mock=mock)
         self.filtered_sample = self.filter_samples(filter)
+        self.export()
 
     def load_dataframe(self, index, _sep, mock=False):
         '''
@@ -51,8 +53,8 @@ class Coverage:
         Inputs:
             index (str): the preferred column that indexes the dataframe
         '''
-        if mock:
-            self.directory = os.path.join(self.directory, self.folder)
+        # if mock:
+        #     self.directory = os.path.join(self.directory, self.folder)
         path = os.path.join(self.directory, self.file)
         df = pd.read_csv(path, sep=_sep).set_index(index)
         if self.norm:
@@ -76,7 +78,7 @@ class Coverage:
         return df[criteria.index[criteria]]
 
 
-    def export(self, export_directory=None, name='data.txt'):
+    def export(self):
         '''
         Exports the dataframe into a .txt file for anvi'o
 
@@ -84,12 +86,11 @@ class Coverage:
             export_directory (str): desired directory
 
         '''
-        if export_directory is None:
-            export_directory = os.getcwd()
+        name = self.file.replace('.csv', '.txt')
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
         df = t.transpose()
-        df.to_csv(os.path.join(export_directory, name), sep='\t')
+        df.to_csv(os.path.join(self.directory, name), sep='\t')
 
 
     def plot_values(self, x_axis, metagenome, kind, labels, color):

@@ -1,13 +1,13 @@
 import csv
-import random
+import os
 
 from os import getcwd as working_directory
 from paths import FileManage
 from numpy.random import uniform, choice
 
 class MockData:
-    def __init__(self, f='Untitled.csv', folder_name='folder', 
-                directory=working_directory, rows=100, columns=100):
+    def __init__(self, folder_name='folder', directory=working_directory, 
+                rows=100, columns=100):
         '''
         Initializes the MockData class
 
@@ -18,9 +18,9 @@ class MockData:
         '''
         self.rows = rows
         self.columns = columns
-        self.manage = FileManage(directory=directory, folder=folder_name, 
-                                 file_name=f)
+        self.manage = FileManage(directory=directory, folder=folder_name)
         self.file = self.manage.file_name
+        self.directory = self.manage.path
     
     def interval_generator(self):
         classifiers = ['Core', 'Accessory', 'Absent', 'Non-Specific']
@@ -67,7 +67,7 @@ class MockData:
             # writes out the name of the columns and gene's coverage values
             write.writerow(metagenomes)
             write.writerows(coverage_values)
-
+            
         self.manage.move_file()
 
    

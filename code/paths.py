@@ -1,16 +1,17 @@
 import os 
+import uuid
 
 from shutil import move 
 
 class FileManage:
-    def __init__(self, directory, folder='folder', file_name='Untitled.csv'):
+    def __init__(self, directory, folder='folder'):
 
-        self.file_name = file_name
+        self.file_name = str(uuid.uuid4()) + '.csv'
         self.home = os.path.expanduser('~')
         self.directory = directory
         self.folder = folder + '/'
         self.path = self.create_folder(directory, folder)
-    
+
 
     def create_folder(self, directory, folder):
         os.chdir(self.home)
@@ -24,16 +25,7 @@ class FileManage:
 
         print("Your new directory '%s' was successfully created :)" %(new_path))
         return new_path
-    
 
     def move_file(self): 
         move(self.file_name, self.path)
 
-
-
-        
-
-
-
-
-    
