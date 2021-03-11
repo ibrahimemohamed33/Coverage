@@ -53,8 +53,7 @@ class Coverage:
         Inputs:
             index (str): the preferred column that indexes the dataframe
         '''
-        # if mock:
-        #     self.directory = os.path.join(self.directory, self.folder)
+        
         path = os.path.join(self.directory, self.file)
         df = pd.read_csv(path, sep=_sep).set_index(index)
         if self.norm:
@@ -86,6 +85,7 @@ class Coverage:
             export_directory (str): desired directory
 
         '''
+
         name = self.file.replace('.csv', '.txt')
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
@@ -94,6 +94,22 @@ class Coverage:
 
 
     def plot_values(self, x_axis, metagenome, kind, labels, color):
+        '''
+        Plots the dataframe's coverage values using seaborn
+
+        Inputs:
+            x_axis (str): the parameter to compare the gene's coverage values. This 
+                          is typically the gene's id or name        
+            metagenome (str): the name of the metagenome to plot
+            kind (scatter, line): type of plot
+            labels (tuple): the title of the x-axis, y-axis, and overall title
+            color (str): preferred color of the plot
+
+        Output:
+            a relational plot
+
+        '''
+
         x_label, y_label, title = labels
         x_start = self.dataframe.iloc[:1].index[0]
         x_end = self.dataframe.iloc[:1].index[-1]
@@ -106,6 +122,17 @@ class Coverage:
     
 
     def create_heatmap(self, size=(5,5), cmap='RdYlGn', interval=(0.0002, 0.002)):
+        '''
+        Uses seaborn to create and plot a heatmap 
+
+        Input:
+            size (tuple): size of heatmap
+            cmap (string): color scale
+            interval (tuple): the vmin and vmax values
+        Output:
+            seaborn heatmap
+        '''
+
         minimum, maximum = interval
         length, width = size
         fig = plt.gcf()
