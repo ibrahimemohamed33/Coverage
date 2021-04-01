@@ -6,13 +6,14 @@ classifiers = ['Core', 'Accessory']
 probabilities = [0.54, 0.46]
 
 class Values:
-    def __init__(self, drop=True):
+    def __init__(self, drop=True, directory=None):
         '''
         Initializes the Values class to store all possible coverage values for 
         core and accessory genes.  
         '''
-        #Directory that stores the coverage values
-        directory = '~/Coverage/code/core.txt'
+        if directory is None:
+            #Directory that stores the coverage values
+            directory = '~/Coverage/code/core.txt'
 
         self.df = pd.read_csv(directory, sep='\t').set_index('gene_callers_id')
         self.normalize_dataframe()
@@ -20,9 +21,7 @@ class Values:
         self.accessory_dataframe = self.df[self.df["Core"] == 0].drop("Core", axis=1)
         if drop:
             self.df = self.drop_classifier()[0]
-        
-            
-        
+  
 
     def drop_classifier(self, dataframe=None):
         if dataframe is None:
