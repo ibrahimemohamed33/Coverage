@@ -4,11 +4,11 @@ import os
 from os import getcwd as working_directory
 from paths import FileManage
 from numpy.random import uniform, choice
-from probability import Probability as P
+from values import MockValues as MV
 
 class MockData:
     def __init__(self, folder_name='folder', directory=working_directory,  
-                core_file='core.txt', rows=100, columns=100):
+                 rows=100, columns=100):
         '''
         Initializes the MockData class
 
@@ -34,15 +34,13 @@ class MockData:
             index (str): preferred index
         '''
         #creates the column names
-        metagenomes = ['metagenome_%d' %(i) for i in range(self.columns)]
-        metagenomes.insert(0, index)
+        metagenomes = [index] + ['metagenome_%d' %(i) for i in range(self.columns)] + ['Core']
         #generates the rows of randomized data 
         coverage_values = []
         for j in range(self.rows):
             gene_name = 'gene__%d' %(j)
-            p = P(self.columns)
-            coverage = list(p.values(self.columns))
-            coverage.insert(0, gene_name)
+            p = MV(self.columns)
+            coverage = [gene_name] + p.values + [p.classifier]
             coverage_values.append(coverage)
 
         with open(self.file, 'w') as f:
