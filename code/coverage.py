@@ -37,13 +37,15 @@ class Coverage:
             self.mock.generate_data(index)
             self.folder = folder_name
             self.file = self.mock.file
+            self.additional_layer_file = self.mock.additional_layer_file
             self.directory = self.mock.directory
 
         else:
             self.file = f
             self.directory = directory
+            self.additional_layer_file = None
         
-        self.dataframe = self.load_dataframe(index, separator,mock=mock)
+        self.dataframe = self.load_dataframe(index, separator, mock=mock)
         self.filtered_sample = self.filter_samples(filter)
         self.export()
 
@@ -59,7 +61,7 @@ class Coverage:
         if self.norm:
             df = df/df.sum()
         if self.sort:
-            df = df.sort_values(by=list(df.columns),axis=0) 
+            df = df.sort_values(by=list(df.columns), axis=0) 
         return df
     
 
@@ -79,19 +81,23 @@ class Coverage:
 
     def export(self):
         '''
-        Exports the dataframe into a .txt file for anvi'o
+        Exports the dataframe into a tab-separated .txt file for anvi'o
 
         Inputs:
             export_directory (str): desired directory
 
         '''
+        if self.additional_layer_file is not None:
+            new_path = os.path.join(self.directory, self.additional_layer_file)
+            f = pd.read_csv(new_path, sep='\t')
+            f.to_csv(new_path, sep='\t', index=False)
 
         name = self.file.replace('.csv', '.txt')
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
         df = t.transpose()
         df.to_csv(os.path.join(self.directory, name), sep='\t')
-
+        
 
     def plot_values(self, x_axis, metagenome, kind, labels, color):
         '''

@@ -1,10 +1,10 @@
 import csv
 import os
 
+import pandas as pd
 from os import getcwd as working_directory
 from paths import FileManage
-from numpy.random import uniform, choice
-from values import MockValues as MV
+from values import MockValues
 
 class MockData:
     def __init__(self, folder_name='folder', directory=working_directory,  
@@ -21,7 +21,9 @@ class MockData:
         self.columns = columns
         self.manage = FileManage(directory=directory, folder=folder_name)
         self.file = self.manage.file_name
+        self.additional_layer_file = self.manage.additional_layer
         self.directory = self.manage.path
+
     
     def generate_data(self, index='gene_callers_id'):
         '''
@@ -34,21 +36,33 @@ class MockData:
             index (str): preferred index
         '''
         #creates the column names
-        metagenomes = [index] + ['metagenome_%d' %(i) for i in range(self.columns)] + ['Core']
-        #generates the rows of randomized data 
+        layers = ['Core']
+        metagenomes = [index] + ['metagenome_%d' %(i) for i in range(self.columns)] 
+
         coverage_values = []
+        additional_layers = []
+        #generates the rows of randomized data 
         for j in range(self.rows):
             gene_name = 'gene__%d' %(j)
-            p = MV(self.columns)
-            coverage = [gene_name] + p.values + [p.classifier]
-            coverage_values.append(coverage)
+            # creates the list of randomized data
+            p = MockValues(self.columns)
+            coverage_values.append([gene_name] + p.values)
+            additional_layers.append([p.classifier])
 
         with open(self.file, 'w') as f:
             write = csv.writer(f, delimiter=',')
             # writes out the name of the columns and gene's coverage values
             write.writerow(metagenomes)
             write.writerows(coverage_values)
-            
+        
+        # writes additional layer file for anvi'o
+        with open(self.additional_layer_file, 'w') as f:
+            write = csv.writer(f, delimiter=',')
+            write.writerow(layers)
+            write.writerows(additional_layers)
+
         self.manage.move_file()
+
+    
 
    

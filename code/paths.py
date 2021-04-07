@@ -3,6 +3,7 @@ import uuid
 
 from shutil import move 
 
+
 class FileManage:
     def __init__(self, directory, folder='folder'):
         '''
@@ -12,12 +13,34 @@ class FileManage:
             directory (str): directory to manage and move files
             folder (str): name of folder
         '''
-
-        self.file_name = str(uuid.uuid4()) + '.csv'
-        self.home = os.path.expanduser('~')
         self.directory = directory
         self.folder = folder + '/'
+        self.home = os.path.expanduser('~')
+
+        self.file_name = self.generate_unique_name('.csv')
+        self.additional_layer = self.layer_string()
         self.path = self.create_folder(directory, folder)
+    
+    def generate_unique_name(self, file_extension):
+        '''
+        Generates a unique name for the mockdata file
+
+        Input:
+            file_extension (str): the preferred file extension (e.g. .txt, .csv)
+        '''
+
+        unique_string = str(uuid.uuid4())
+        return unique_string + file_extension
+
+
+    def layer_string(self):
+        '''
+        Creates the name for the additional layer file
+        '''
+
+        p = 'additional_layer_'
+        return p + self.file_name.replace('.csv', '.txt')
+
 
 
     def create_folder(self, directory, folder):
@@ -32,9 +55,8 @@ class FileManage:
         os.chdir(self.home)
         if '~' in directory:
             directory = directory.replace('~', self.home)
-
-        directory = directory.replace(self.home + '/', '')
-        new_path = os.path.join(directory, folder)
+            
+        new_path = os.path.join(directory.replace(self.home + '/', ''), folder)
         if not os.path.isdir(new_path):
             os.mkdir(new_path)
 
@@ -45,6 +67,6 @@ class FileManage:
         '''
         Moves the file into directory
         '''
-        
-        move(self.file_name, self.path)
 
+        move(self.file_name, self.path)
+        move(self.additional_layer, self.path)
