@@ -7,9 +7,20 @@ import seaborn as sns
 from mock_training import MockData
 
 class Coverage:
-    def __init__(self, directory, f='Untitled.csv', index='gene_callers_id', 
-                 norm=True, sort=False, filter=0, separator=None, mock=False,
-                 folder_name='folder', rows=100, columns=100):
+    def __init__(self, 
+                directory, 
+                mock=False,
+                export=True,
+                create_folder=False,
+                file_name='Untitled.csv', 
+                index='gene_callers_id', 
+                folder_name='folder',
+                separator=None, 
+                norm=True, 
+                sort=False, 
+                filter=0, 
+                rows=100, 
+                columns=100):
         '''
         Initializes the Coverage class
 
@@ -23,7 +34,7 @@ class Coverage:
             index (str): the preferred column name to index
         '''
 
-        if not (type(directory) == type(f)) and isinstance(norm, bool):
+        if not (type(directory) == type(file_name)) and isinstance(norm, bool):
             raise Exception("""Directory, index, and file need to be a string
                                 and norm should be boolean value""")
         
@@ -34,6 +45,7 @@ class Coverage:
             self.mock = MockData(directory=directory, 
                                 rows=rows, 
                                 columns=columns, 
+                                create_folder=create_folder,
                                 folder_name=folder_name)
 
             self.mock.generate_data(index)
@@ -43,16 +55,15 @@ class Coverage:
             self.directory = self.mock.directory
 
         else:
-            self.file = f
+            self.file = file_name
             self.directory = directory
             self.additional_layer_file = None
         
-        self.dataframe = self.load_dataframe(
-            index, separator, mock=mock
-            )
-            
+        self.dataframe = self.load_dataframe(index, separator, mock=mock)
         self.filtered_sample = self.filter_samples(filter)
-        self.export()
+        
+        if export:
+            self.export()
 
     def load_dataframe(self, index, _sep, mock=False):
         '''

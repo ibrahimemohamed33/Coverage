@@ -5,7 +5,10 @@ from shutil import move
 
 
 class FileManage:
-    def __init__(self, directory, folder='folder'):
+    def __init__(self, 
+                directory, 
+                create_folder=False,
+                folder='folder'):
         '''
         Initializes the FileManage class
 
@@ -19,7 +22,8 @@ class FileManage:
 
         self.file_name = self.generate_unique_name('.csv')
         self.additional_layer = self.layer_string()
-        self.path = self.create_folder(directory, folder)
+        if create_folder:
+            self.path = self.create_folder(directory, folder)
     
     def generate_unique_name(self, file_extension):
         '''

@@ -7,8 +7,12 @@ from paths import FileManage
 from values import MockValues
 
 class MockData:
-    def __init__(self, folder_name='folder', directory=working_directory,  
-                 rows=100, columns=100):
+    def __init__(self,
+                 folder_name='folder', 
+                 directory=working_directory,  
+                 create_folder=False, 
+                 rows=100, 
+                 columns=100):
         '''
         Initializes the MockData class
 
@@ -20,7 +24,8 @@ class MockData:
         self.rows = rows
         self.columns = columns
 
-        self.manage = FileManage(directory=directory,
+        self.manage = FileManage(directory=directory, 
+                                 create_folder=create_folder,
                                  folder=folder_name)
 
         self.file = self.manage.file_name
