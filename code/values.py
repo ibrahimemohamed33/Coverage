@@ -15,13 +15,22 @@ class Values:
             #Directory that stores the coverage values
             directory = '~/Coverage/code/core.txt'
 
-        self.df = pd.read_csv(directory, sep='\t').set_index('gene_callers_id')
+        self.df = self.load_dataframe(directory)
         self.normalize_dataframe()
-        self.core_dataframe = self.df[self.df["Core"] == 1].drop("Core", axis=1)
-        self.accessory_dataframe = self.df[self.df["Core"] == 0].drop("Core", axis=1)
+        self.core_dataframe = self.load_adjusted_dataframes(core=True)
+        self.accessory_dataframe = self.load_adjusted_dataframes(core=False)
         if drop:
             self.df = self.drop_classifier()[0]
   
+
+    def load_dataframe(self, directory):
+        return pd.read_csv(directory, sep='\t').set_index('gene_callers_id')
+    
+    def load_adjusted_dataframes(self, core=True):
+        # filters the dataframe based on whether an entry is core
+        _filter = (self.df["Core"] == 1) if core else (self.df["Core"] == 0)
+
+        return self.df[_filter].drop("Core", axis=1)
 
     def drop_classifier(self, dataframe=None):
         if dataframe is None:
@@ -83,5 +92,5 @@ class MockValues:
             alpha, beta = flattened_accessory_values, 0
 
         # Generates random values from core or accessory values
-        p = np.random.permutation(alpha)[:columns]
+        p = np.random.choice(alpha, size=columns)
         return list(p), beta

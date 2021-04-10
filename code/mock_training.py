@@ -19,7 +19,10 @@ class MockData:
         '''
         self.rows = rows
         self.columns = columns
-        self.manage = FileManage(directory=directory, folder=folder_name)
+
+        self.manage = FileManage(directory=directory,
+                                 folder=folder_name)
+
         self.file = self.manage.file_name
         self.additional_layer_file = self.manage.additional_layer
         self.directory = self.manage.path
@@ -36,7 +39,7 @@ class MockData:
             index (str): preferred index
         '''
         #creates the column names
-        layers = ['Core']
+        layers = [index] + ['Core']
         metagenomes = [index] + ['metagenome_%d' %(i) for i in range(self.columns)] 
 
         coverage_values = []
@@ -47,7 +50,7 @@ class MockData:
             # creates the list of randomized data
             p = MockValues(self.columns)
             coverage_values.append([gene_name] + p.values)
-            additional_layers.append([p.classifier])
+            additional_layers.append([gene_name] + [p.classifier])
 
         with open(self.file, 'w') as f:
             write = csv.writer(f, delimiter=',')
@@ -57,7 +60,7 @@ class MockData:
         
         # writes additional layer file for anvi'o
         with open(self.additional_layer_file, 'w') as f:
-            write = csv.writer(f, delimiter=',')
+            write = csv.writer(f, delimiter='\t')
             write.writerow(layers)
             write.writerows(additional_layers)
 

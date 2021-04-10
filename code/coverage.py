@@ -31,8 +31,10 @@ class Coverage:
         self.sort = sort
 
         if mock:
-            self.mock = MockData(directory=directory, rows=rows, 
-                                 columns=columns, folder_name=folder_name)
+            self.mock = MockData(directory=directory, 
+                                rows=rows, 
+                                columns=columns, 
+                                folder_name=folder_name)
 
             self.mock.generate_data(index)
             self.folder = folder_name
@@ -45,7 +47,10 @@ class Coverage:
             self.directory = directory
             self.additional_layer_file = None
         
-        self.dataframe = self.load_dataframe(index, separator, mock=mock)
+        self.dataframe = self.load_dataframe(
+            index, separator, mock=mock
+            )
+            
         self.filtered_sample = self.filter_samples(filter)
         self.export()
 
@@ -58,6 +63,7 @@ class Coverage:
         
         path = os.path.join(self.directory, self.file)
         df = pd.read_csv(path, sep=_sep).set_index(index)
+
         if self.norm:
             df = df/df.sum()
         if self.sort:
@@ -87,16 +93,20 @@ class Coverage:
             export_directory (str): desired directory
 
         '''
-        if self.additional_layer_file is not None:
-            new_path = os.path.join(self.directory, self.additional_layer_file)
-            f = pd.read_csv(new_path, sep='\t')
-            f.to_csv(new_path, sep='\t', index=False)
-
+        # exports the dataframe
         name = self.file.replace('.csv', '.txt')
         t = self.dataframe.transpose()
         t.columns = 'gene_' + t.columns.astype(str)
         df = t.transpose()
         df.to_csv(os.path.join(self.directory, name), sep='\t')
+
+        # exports the additional layer file for anvi'o
+        if self.additional_layer_file is not None:
+            new_path = os.path.join(self.directory, self.additional_layer_file)
+            f = pd.read_csv(new_path, sep='\t')
+            f.to_csv(new_path, sep='\t', index=False)
+
+        
         
 
     def plot_values(self, x_axis, metagenome, kind, labels, color):
