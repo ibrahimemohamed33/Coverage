@@ -13,7 +13,7 @@ class Values:
         '''
         if directory is None:
             #Directory that stores the coverage values
-            directory = '~/Coverage/code/core.txt'
+            directory = '../data/core.txt'
 
         self.df = self.load_dataframe(directory)
         self.normalize_dataframe()

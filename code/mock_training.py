@@ -23,6 +23,7 @@ class MockData:
         '''
         self.rows = rows
         self.columns = columns
+        self.create_folder = create_folder
 
         self.manage = FileManage(directory=directory, 
                                  create_folder=create_folder,
@@ -55,6 +56,7 @@ class MockData:
             # creates the list of randomized data
             p = MockValues(self.columns)
             coverage_values.append([gene_name] + p.values)
+            # stores the classified variable alongside the gene's
             additional_layers.append([gene_name] + [p.classifier])
 
         with open(self.file, 'w') as f:

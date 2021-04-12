@@ -10,7 +10,7 @@ class Coverage:
     def __init__(self, 
                 directory, 
                 mock=False,
-                export=True,
+                export_file=True,
                 create_folder=False,
                 file_name='Untitled.csv', 
                 index='gene_callers_id', 
@@ -59,13 +59,43 @@ class Coverage:
             self.directory = directory
             self.additional_layer_file = None
         
-        self.dataframe = self.load_dataframe(index, separator, mock=mock)
+        self.dataframe = self.load_dataframe(index, 
+                                            separator, 
+                                            create_folder=create_folder,
+                                            export_file=export_file,
+                                            mock=mock)
+
         self.filtered_sample = self.filter_samples(filter)
-        
-        if export:
+        if export_file:
             self.export()
 
-    def load_dataframe(self, index, _sep, mock=False):
+    def delete_files(self, create_folder, export_file):
+        '''
+        Deletes the text files containing all the data so that self.dataframe
+        can be read, as opposed to storing any superfluous data files. This 
+        is particularly helpful when inputting the dataframe into a manifold
+        learning algorithm
+        '''
+
+        additional_layer_path = os.path.join("../generated_scripts/", self.additional_layer_file)
+        file_path = os.path.join("../generated_scripts/", self.file)
+
+        if not os.path.exists(additional_layer_path):
+            raise Exception("It appears that your additional layer '%s' is not in \
+                             your generated scripts file." %(self.additional_layer_file))
+        
+        if not os.path.exists(file_path):
+            raise Exception("It appears that your coverage file '%s' is in \
+                             your generated scripts file." %(self.file))
+        
+        if not create_folder and not export_file:
+            os.remove(additional_layer_path)
+            os.remove(file_path)
+            print("Your files '%s' and '%s' were deleted successfully" \
+                %(self.file, self.additional_layer_file))
+
+
+    def load_dataframe(self, index, _sep, create_folder, export_file, mock=False):
         '''
         Loads the dataframe and includes coverage values of genes within samples
         Inputs:
@@ -78,7 +108,9 @@ class Coverage:
         if self.norm:
             df = df/df.sum()
         if self.sort:
-            df = df.sort_values(by=list(df.columns), axis=0) 
+            df = df.sort_values(by=list(df.columns), axis=0)
+ 
+        self.delete_files(create_folder, export_file)
         return df
     
 
