@@ -18,9 +18,6 @@ inputs should consist of the gene and its associated
 coverage values. The name, or even gene itself, is
 superfluous to the algorithm’s design, since the function essentially attempts to classify the gene based on its coverage values.
 
-This algorithm should return key classifiers that categorize the gene as "core," "variable," "absent," or "non-specific." Moreover, the
-coverage values within a metagenome (as opposed to
-a gene) should be properly normalized so a sample’s
-read counts are not misrepresented.
-
+This algorithm should return key classifiers that categorize the gene as "core," "variable," "absent," or "non-specific." Moreover, the coverage values within a metagenome (as opposed to
+a gene) should be properly normalized so a sample’s read counts are not misrepresented.
 
