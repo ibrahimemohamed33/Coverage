@@ -1,15 +1,15 @@
 import csv
 import os
-
 import pandas as pd
-from os import getcwd as working_directory
-from paths import FileManage
-from values import MockValues
+
+from files import FileManage
+from generate_mock_values import MockValues
+
 
 class MockData:
     def __init__(self,
                  folder_name='folder', 
-                 directory=working_directory,  
+                 directory=os.getcwd(),  
                  create_folder=False, 
                  rows=100, 
                  columns=100):
@@ -25,8 +25,8 @@ class MockData:
         self.columns = columns
         self.create_folder = create_folder
 
-        self.manage = FileManage(directory=directory, 
-                                 create_folder=create_folder,
+        self.manage = FileManage(destination=directory, 
+                                 is_create_folder=create_folder,
                                  folder=folder_name)
 
         self.file = self.manage.file_name

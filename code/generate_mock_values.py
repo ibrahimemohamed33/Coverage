@@ -12,27 +12,36 @@ class Values:
         core and accessory genes.  
         '''
         if directory is None:
-            #Directory that stores the coverage values
-            directory = '../data/core.txt'
+            #Directory that stores the manually determined coverage values
+            directory = '~/Coverage/data/core.txt'
 
         self.df = self.load_dataframe(directory)
         self.normalize_dataframe()
         self.core_dataframe = self.load_adjusted_dataframes(core=True)
         self.accessory_dataframe = self.load_adjusted_dataframes(core=False)
+        
         if drop:
             self.df = self.drop_classifier()[0]
   
 
     def load_dataframe(self, directory):
+        '''
+        Uses pandas to load and read the .csv/.txt file
+        '''
         return pd.read_csv(directory, sep='\t').set_index('gene_callers_id')
     
     def load_adjusted_dataframes(self, core=True):
+        '''
+        Returns the manually classified core or accessory dataframes 
+        '''
         # filters the dataframe based on whether an entry is core
-        _filter = (self.df["Core"] == 1) if core else (self.df["Core"] == 0)
-
-        return self.df[_filter].drop("Core", axis=1)
+        filtered = (self.df["Core"] == 1) if core else (self.df["Core"] == 0)
+        return self.df[filtered].drop("Core", axis=1)
 
     def drop_classifier(self, dataframe=None):
+        '''
+        Helper function that drops the "Core" column
+        '''
         if dataframe is None:
             dataframe = self.df
     
@@ -57,18 +66,21 @@ class Values:
 class MockValues:
     def __init__(self, columns):
         '''
-        Initializes the Probability class
+        Initializes the MockValues class that generates the new, mock values
+        for the MockData class.
 
         Inputs:
             columns (int): number of columns
 
         '''
-
         self.all_values = Values()
         self.core = self.all_values.core_dataframe
         self.accessory = self.all_values.accessory_dataframe
 
-        self.gene_class = np.random.choice(classifiers, size=1, p=probabilities)[0]
+        self.gene_class = np.random.choice(classifiers, 
+                                            size=1, 
+                                            p=probabilities)[0]
+
         self.values, self.classifier = self.return_values(columns)
 
 
@@ -82,7 +94,6 @@ class MockValues:
             randomly generated values, classified variable (lst, int)
 
         '''
-
         flattened_core_values = self.core.to_numpy().flatten()
         flattened_accessory_values = self.accessory.to_numpy().flatten()
         
