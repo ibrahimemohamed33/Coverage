@@ -29,8 +29,8 @@ class MockData:
                                  is_create_folder=create_folder,
                                  folder=folder_name)
 
-        self.file = self.manage.file_name
-        self.additional_layer_file = self.manage.additional_layer
+        self.coverage_values_file = self.manage.file_name
+        self.classified_values_file = self.manage.additional_layer
         self.directory = self.manage.path
 
     
@@ -45,11 +45,14 @@ class MockData:
             index (str): preferred index
         '''
         #creates the column names
-        layers = [index] + ['Core']
-        metagenomes = [index] + ['metagenome_%d' %(i) for i in range(self.columns)] 
+        classification_label = ['Classification']
+
+        metagenome_labels = [index] + [
+            'metagenome_%d' %(i) for i in range(self.columns)
+        ] 
 
         coverage_values = []
-        additional_layers = []
+        classified_values = []
         #generates the rows of randomized data 
         for j in range(self.rows):
             gene_name = 'gene__%d' %(j)
@@ -57,19 +60,19 @@ class MockData:
             p = MockValues(self.columns)
             coverage_values.append([gene_name] + p.values)
             # stores the classified variable alongside the gene's
-            additional_layers.append([gene_name] + [p.classifier])
+            classified_values.append([gene_name] + [p.classifier])
 
-        with open(self.file, 'w') as f:
+        # writes out column's name in addition to the gene's coverage values
+        with open(self.coverage_values_file, 'w') as f:
             write = csv.writer(f, delimiter=',')
-            # writes out the name of the columns and gene's coverage values
-            write.writerow(metagenomes)
+            write.writerow(metagenome_labels)
             write.writerows(coverage_values)
         
         # writes additional layer file for anvi'o
-        with open(self.additional_layer_file, 'w') as f:
+        with open(self.classified_values_file, 'w') as f:
             write = csv.writer(f, delimiter='\t')
-            write.writerow(layers)
-            write.writerows(additional_layers)
+            write.writerow(classification_label)
+            write.writerows(classified_values)
 
         self.manage.move_file()
 

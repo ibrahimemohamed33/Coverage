@@ -47,7 +47,7 @@ class FileManage:
         '''
         Creates the name for the additional layer file
         '''
-        return 'additional_layer_' + self.file_name.replace('.csv', '.txt')
+        return 'classified_' + self.file_name.replace('.csv', '.txt')
 
 
     def create_folder(self, destination, folder, is_create_folder):

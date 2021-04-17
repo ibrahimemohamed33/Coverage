@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from dimension import Reduction
+from dimension import Embedding
 from coverage import Coverage
 
 class Plots:
@@ -37,7 +37,7 @@ class Plots:
         self.interval = interval
         self.color = color
 
-        self.reduced = Reduction(n_neighbors=n_neighbors,
+        self.reduced = Embedding(n_neighbors=n_neighbors,
                                 directory=directory,
                                 path='auto',
                                 dimension=dimension,

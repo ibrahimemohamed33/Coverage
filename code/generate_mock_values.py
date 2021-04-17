@@ -12,8 +12,8 @@ class Values:
         core and accessory genes.  
         '''
         if directory is None:
-            #Directory that stores the manually determined coverage values
-            directory = '~/Coverage/data/core.txt'
+            # stores the manually classified coverage values
+            directory = '~/Coverage/data/classified_values.txt'
 
         self.df = self.load_dataframe(directory)
         self.normalize_dataframe()
@@ -35,30 +35,31 @@ class Values:
         Returns the manually classified core or accessory dataframes 
         '''
         # filters the dataframe based on whether an entry is core
-        filtered = (self.df["Core"] == 1) if core else (self.df["Core"] == 0)
-        return self.df[filtered].drop("Core", axis=1)
+        F = lambda n: self.df['Classification'] == n
+        filtered = F(1) if core else F(0)
+        return self.df[filtered].drop('Classification', axis=1)
 
     def drop_classifier(self, dataframe=None):
         '''
-        Helper function that drops the "Core" column
+        Helper function that drops the 'Classification' column
         '''
         if dataframe is None:
             dataframe = self.df
     
-        if 'Core' in dataframe.columns:
-            core = dataframe["Core"]
-            df = dataframe.drop("Core", axis=1)
+        if 'Classification' in dataframe.columns:
+            classifiers = dataframe['Classification']
+            df = dataframe.drop('Classification', axis=1)
 
-        return df, core
+        return df, classifiers
 
     def normalize_dataframe(self):
         '''
         Normalizes the sample's reads
         '''
-        if 'Core' in self.df.columns:
-            dropped, core = self.drop_classifier()
+        if 'Classification' in self.df.columns:
+            dropped, classifiers = self.drop_classifier()
             self.df = dropped/dropped.sum()
-            self.df["Core"] = core
+            self.df['Classification'] = classifiers
         else:
             self.df = self.df/self.df.sum()
 
@@ -74,8 +75,8 @@ class MockValues:
 
         '''
         self.all_values = Values()
-        self.core = self.all_values.core_dataframe
-        self.accessory = self.all_values.accessory_dataframe
+        self.core = self.all_values.core_dataframe.to_numpy().flatten()
+        self.accessory = self.all_values.accessory_dataframe.to_numpy().flatten()
 
         self.gene_class = np.random.choice(classifiers, 
                                             size=1, 
@@ -94,13 +95,11 @@ class MockValues:
             randomly generated values, classified variable (lst, int)
 
         '''
-        flattened_core_values = self.core.to_numpy().flatten()
-        flattened_accessory_values = self.accessory.to_numpy().flatten()
-        
-        if self.gene_class == 'Core':
-            alpha, beta = flattened_core_values, 1
+
+        if self.gene_class == 'Classification':
+            alpha, beta = self.core, 1
         else:
-            alpha, beta = flattened_accessory_values, 0
+            alpha, beta = self.accessory, 0
 
         # Generates random values from core or accessory values
         p = np.random.choice(alpha, size=columns)
