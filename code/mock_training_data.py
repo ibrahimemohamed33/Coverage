@@ -24,16 +24,20 @@ class MockData:
         self.rows = rows
         self.columns = columns
         self.create_folder = create_folder
+        self.working_directory = directory
 
-        self.manage = FileManage(destination=directory, 
-                                 is_create_folder=create_folder,
-                                 folder=folder_name)
+        self.manage = FileManage(
+            destination=directory, 
+            create_folder=create_folder,
+            folder=folder_name
+            )
 
-        self.coverage_values_file = self.manage.file_name
-        self.classified_values_file = self.manage.additional_layer
+        self.coverage_values_file = self.manage.coverage_values_file_name
+        self.classified_values_file = self.manage.classified_values_file_name
         self.directory = self.manage.path
+        self.generate_data()
 
-    
+
     def generate_data(self, index='gene_callers_id'):
         '''
         Creates a csv file and uses the helper functions to input the data and
@@ -44,9 +48,10 @@ class MockData:
             folderName (str): preferred name for folder
             index (str): preferred index
         '''
+        os.chdir(self.directory)
         #creates the column names
         classification_label = ['Classification']
-
+        
         metagenome_labels = [index] + [
             'metagenome_%d' %(i) for i in range(self.columns)
         ] 
@@ -74,7 +79,7 @@ class MockData:
             write.writerow(classification_label)
             write.writerows(classified_values)
 
-        self.manage.move_file()
+        self.manage.relocate_files()
 
     
 

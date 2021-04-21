@@ -37,13 +37,15 @@ class Plots:
         self.interval = interval
         self.color = color
 
-        self.reduced = Embedding(n_neighbors=n_neighbors,
-                                directory=directory,
-                                path='auto',
-                                dimension=dimension,
-                                mock=mock,
-                                rows=rows,
-                                columns=columns)
+        self.reduced = Embedding(
+            n_neighbors=n_neighbors,
+            directory=directory,
+            path='auto',
+            dimension=dimension,
+            mock=mock,
+            rows=rows,
+            columns=columns
+        )
         
         if embed:
             self.dataframe = self.reduced.embedded_dataframe
@@ -69,11 +71,13 @@ class Plots:
         vmin, vmax = self.interval
         fig = plt.gcf()
         fig.set_size_inches(height, width)
-
-        sns.heatmap(data=self.dataframe,
-                    vmin=vmin,
-                    vmax=vmax,
-                    cmap=cmap).invert_yaxis()
+        
+        sns.heatmap(
+            data=self.dataframe,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap
+        ).invert_yaxis()
     
 
     def plot_relation(self):
@@ -90,11 +94,13 @@ class Plots:
         X_start, X_end = indexed_dataframe(0), indexed_dataframe(-1)
         y_axis = self.dataframe[self.y_label]
 
-        plot = sns.relplot(x=self.x_axis,
-                           y=y_axis,
-                           data=self.dataframe,
-                           kind=self.kind,
-                           color=self.color)
+        plot = sns.relplot(
+            x=self.x_axis,
+            y=y_axis,
+            data=self.dataframe,
+            kind=self.kind,
+            color=self.color
+        )
                            
         plot.set(xlim=(X_start, X_end)).set_axis_labels(self.x_label, self.y_label)
         plot.fig.subtitle(self.title)   

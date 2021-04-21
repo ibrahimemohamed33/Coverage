@@ -1,12 +1,78 @@
 import os 
 import uuid
+import shutil
 
-from shutil import move 
+
+class ConvertPath:
+    def __init__(self, path, file, create_folder=True, file_included_in_directory=False):
+
+        self.home = os.path.expanduser('~')
+        self.relative_path = path
+        self.is_path_OK(self.relative_path, create_folder)
+        self.absolute_path = os.path.abspath(path)
+        self.extract_file(file, file_included_in_directory)
+    
+    def is_path_OK(self, path, create_folder):
+        self.is_home_directory_OK(path)
+        if path is None or not create_folder:
+            #stores files in /generated_scripts directory
+            self.relative_path = '../generated_scripts'
+
+        if not os.path.isdir(os.path.abspath(path)):
+            D = lambda string, string1: os.path.join(string, string1)
+            raise Exception(
+                """Unfortunately, the path '%s' you inputted is not a valid path
+                name, at least within the directory '%s'. This means
+                that your new path '%s' does not exist, nor does the absolute path
+                %s exists. You should probably change the way you configure your
+                path and that may do the trick"""
+                %(path, os.getcwd(), os.path.abspath(path), D(os.getcwd(), path))
+            )
+
+    def is_home_directory_OK(self, path):
+        D = lambda string, string1: os.path.join(string, string1)
+        converted_path = self.convert_directory(path)
+        if not os.path.isdir(converted_path):
+            raise Exception(
+            """Unfortunately, the absolute path '%s' you inputted is not a valid path
+            name, at least within the directory '%s'. This means
+            that your new path '%s' does not exist, nor does the absolute path
+            '%s' exists. You should probably change the way you configure your
+            path and that may do the trick"""
+            %(path, os.getcwd(), converted_path, D(os.getcwd(), converted_path))
+        )
+        
+    def convert_directory(self, path):
+        if path[-1] != '/':
+            path += '/'
+
+        if '~' in path:
+            path = path.replace('~/', '')
+
+        if self.home in path:
+            path = path.replace(self.home + '/', '')
+        os.chdir(self.home)
+        return os.path.abspath(path)
+            
+
+    def extract_file(self, file, file_included_in_directory):
+        if file_included_in_directory:
+            self.file = os.path.split(self.absolute_path)[-1]
+            self.folder_path = os.path.split(self.absolute_path)[-2]
+        else:
+            self.file = file
+            self.folder_path = self.absolute_path
+ 
+    def move_files(self):
+        os.chdir(self.home)
+        shutil.move(self.folder_path, self.file)
+
+
 
 class FileManage:
     def __init__(self, 
                 destination, 
-                is_create_folder=False,
+                create_folder=False,
                 folder='folder'):
         '''
         Initializes the FileManage class. This is generally used when creating
@@ -20,70 +86,54 @@ class FileManage:
                                   store the data
         '''
 
-        self.destination = destination
         self.folder = folder + '/'
 
-        self.working_directory = os.getcwd()
-        self.home = os.path.expanduser('~')
-        self.file_name = self.generate_unique_name('.txt')
-        self.additional_layer = self.additional_layer_string()
+        # generates unique name for the coverage and classifier file
+        self.coverage_values_file_name = self.generate_unique_name('.txt')
+        self.classified_values_file_name = self.layer_string()
 
-        self.path = self.create_folder(destination=destination, 
-                                       folder=self.folder, 
-                                       is_create_folder=is_create_folder)
+
+        self.convert_file = ConvertPath(
+                path=destination, file=self.coverage_values_file_name, create_folder=create_folder
+            )
+        self.convert_additional = ConvertPath(
+                path=destination, file=self.classified_values_file_name, create_folder=create_folder
+            )
+
+        self.home_directory = self.convert_file.home
+        self.destination = self.convert_file.absolute_path
+        self.path = self.make_folder(destination=self.destination, folder=self.folder)
 
 
     def generate_unique_name(self, file_extension):
-        '''
-        Generates a unique name for the mockdata file
-
-        Input:
-            file_extension (str): the preferred file extension (e.g. .txt, .csv)
-        '''
         return str(uuid.uuid4()) + file_extension
 
+    def layer_string(self):
+        return 'classified_' +  self.coverage_values_file_name.replace('.csv', '.txt')
 
-    def additional_layer_string(self):
+
+    def make_folder(self, destination, folder):
         '''
-        Creates the name for the additional layer file
+        Creates and moves folder into preferred destination
         '''
-        return 'classified_' + self.file_name.replace('.csv', '.txt')
-
-
-    def create_folder(self, destination, folder, is_create_folder):
-        '''
-        Creates and moves the folder into preferred destination
-
-        Inputs:
-            destination (str): destination to manage and move files
-            folder (str): name of folder
-        '''
-
-        os.chdir(self.working_directory)
-        if not is_create_folder:
-            os.chdir('../')
-            destination = 'generated_scripts/'
-        else:
-            os.chdir(self.home)
-            rho = lambda string: destination.replace(string, '')
-            destination = rho('~/') if '~' in destination else rho(self.home + '/')
-
+        
         new_path = os.path.join(destination, folder)
-
         if not os.path.isdir(new_path):
             os.mkdir(new_path)
-            print("Your new directory '%s' was created succesfully :)" %(new_path))
-        
+            print(
+                "Your new directory '%s' was created succesfully :)"
+                 %(new_path)
+            )
         else:
-            print("Your directory '%s' already exists but don't worry, the files"
-                " will still be placed within it" %(new_path))
+            print(
+                """Your directory '%s' already exists but don't worry, the files
+                will still be placed within it""" 
+                %(new_path)
+            )
+
         return new_path
+    
+    def relocate_files(self):
+        self.convert_file.move_files()
+        self.convert_additional.move_files()
 
-
-    def move_file(self): 
-        '''
-        Moves the file into directory
-        '''
-
-        move(self.file_name, self.path)
-        move(self.additional_layer, self.path)

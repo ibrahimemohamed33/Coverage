@@ -6,22 +6,17 @@ classifiers = ['Core', 'Accessory']
 probabilities = [0.54, 0.46]
 
 class Values:
-    def __init__(self, drop=True, directory=None):
+    def __init__(self, drop=False, directory='~/Coverage/data/classified_values.txt'):
         '''
         Initializes the Values class to store all possible coverage values for 
         core and accessory genes.  
         '''
-        if directory is None:
-            # stores the manually classified coverage values
-            directory = '~/Coverage/data/classified_values.txt'
-
         self.df = self.load_dataframe(directory)
         self.normalize_dataframe()
         self.core_dataframe = self.load_adjusted_dataframes(core=True)
         self.accessory_dataframe = self.load_adjusted_dataframes(core=False)
-        
         if drop:
-            self.df = self.drop_classifier()[0]
+            self.df, _ = self.drop_classifier()
   
 
     def load_dataframe(self, directory):
@@ -77,11 +72,7 @@ class MockValues:
         self.all_values = Values()
         self.core = self.all_values.core_dataframe.to_numpy().flatten()
         self.accessory = self.all_values.accessory_dataframe.to_numpy().flatten()
-
-        self.gene_class = np.random.choice(classifiers, 
-                                            size=1, 
-                                            p=probabilities)[0]
-
+        self.gene_class = np.random.choice(classifiers, size=1, p=probabilities)[0]
         self.values, self.classifier = self.return_values(columns)
 
 
@@ -96,11 +87,10 @@ class MockValues:
 
         '''
 
-        if self.gene_class == 'Classification':
+        if self.gene_class == 'Core':
             alpha, beta = self.core, 1
         else:
             alpha, beta = self.accessory, 0
-
         # Generates random values from core or accessory values
         p = np.random.choice(alpha, size=columns)
         return list(p), beta
