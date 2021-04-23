@@ -1,11 +1,12 @@
 import os 
 import uuid
-import shutil
-
 
 class ConvertPath:
     def __init__(self, path, file, create_folder=True, file_included_in_directory=False):
-
+        '''
+        Initializes the ConvertPath Class that will be helpful in navigating
+        directories and files
+        '''
         self.home = os.path.expanduser('~')
         self.relative_path = path
         self.is_path_OK(self.relative_path, create_folder)
@@ -18,7 +19,8 @@ class ConvertPath:
             #stores files in /generated_scripts directory
             self.relative_path = '../generated_scripts'
 
-        if not os.path.isdir(os.path.abspath(path)):
+        converted_path = self.convert_directory(path)
+        if not os.path.isdir(os.path.abspath(converted_path)):
             D = lambda string, string1: os.path.join(string, string1)
             raise Exception(
                 """Unfortunately, the path '%s' you inputted is not a valid path
@@ -51,6 +53,7 @@ class ConvertPath:
 
         if self.home in path:
             path = path.replace(self.home + '/', '')
+
         os.chdir(self.home)
         return os.path.abspath(path)
             
@@ -63,11 +66,6 @@ class ConvertPath:
             self.file = file
             self.folder_path = self.absolute_path
  
-    def move_files(self):
-        os.chdir(self.home)
-        shutil.move(self.folder_path, self.file)
-
-
 
 class FileManage:
     def __init__(self, 
@@ -132,8 +130,3 @@ class FileManage:
             )
 
         return new_path
-    
-    def relocate_files(self):
-        self.convert_file.move_files()
-        self.convert_additional.move_files()
-

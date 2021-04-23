@@ -79,8 +79,4 @@ class MockData:
             write.writerow(classification_label)
             write.writerows(classified_values)
 
-        self.manage.relocate_files()
-
-    
-
    

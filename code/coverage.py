@@ -105,7 +105,8 @@ class Coverage:
         if filter > 0:
             self.dataframe = self.filter_samples(filter)
 
-        self.coverage_values, self.classified_values = self.extract_values(train)
+        self.extract_values(train, mock)
+        # self.coverage_values, self.classified_values = 
         self.export(export_file=export_file, train=train)
     
     def parse_directory(self, directory, coverage_values_file, 
@@ -182,7 +183,7 @@ class Coverage:
         if mock:
             self.delete_files(create_folder, export_file)
         return df
-    
+
 
     def filter_samples(self, filter=0):
         '''
@@ -195,18 +196,17 @@ class Coverage:
         criteria = (self.dataframe.median() >= filter)
         return self.dataframe[criteria.index[criteria]]
 
-    def extract_values(self, train):
+    def extract_values(self, train, mock):
         # ensures there are some classification values when loading a personal dataset
-
-        f = lambda dataframe: dataframe.to_numpy()
+        F = lambda dataframe: dataframe.to_numpy()
         if train:
             try:
-                _classified_values = f(self.dataframe['Classification'])
-                _coverage_values = f(self.dataframe.drop('Classification', axis=1))
+                _classified_values = F(self.dataframe['Classification'])
+                _coverage_values = F(self.dataframe.drop('Classification', axis=1))
                 return _coverage_values, _classified_values
 
             except Exception as e:
-                KeyError(
+                raise KeyError(
                 """ Unfortunately, your dataframe does not contain the necessary
                 dataframe column '%s.' Since this is your training data, you
                 need to redefine your column that contains the classified
@@ -216,13 +216,7 @@ class Coverage:
 
         else:
             _classified_values = 0
-            _coverage_values = f(self.dataframe)
-            if _coverage_values == None:
-                print("Fix 1")
-            elif _classified_values == None:
-                print("Fix 2")
-            else:
-                print("Try the other")
+            _coverage_values = F(self.dataframe)
             return _coverage_values, _classified_values
 
 
