@@ -88,15 +88,15 @@ class FileManage:
 
         # generates unique name for the coverage and classifier file
         self.coverage_values_file_name = self.generate_unique_name('.txt')
-        self.classified_values_file_name = self.layer_string()
+        # self.classified_values_file_name = self.layer_string()
 
 
         self.convert_file = ConvertPath(
                 path=destination, file=self.coverage_values_file_name, create_folder=create_folder
             )
-        self.convert_additional = ConvertPath(
-                path=destination, file=self.classified_values_file_name, create_folder=create_folder
-            )
+        # self.convert_additional = ConvertPath(
+        #         path=destination, file=self.classified_values_file_name, create_folder=create_folder
+        #     )
 
         self.home_directory = self.convert_file.home
         self.destination = self.convert_file.absolute_path

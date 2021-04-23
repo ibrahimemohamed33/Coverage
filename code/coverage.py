@@ -65,10 +65,10 @@ class Coverage:
 
 
         '''
+        self.separator = separator
 
         if mock:
-            self.separator = separator
-            _directory, _coverage, _classified = self.create_mock_data(
+            self.create_mock_data(
                             train=train, 
                             directory=directory, 
                             rows=rows, 
@@ -79,40 +79,37 @@ class Coverage:
                             file_included_in_directory=file_included_in_directory,
                             coverage_values_file=coverage_values_file
                         )
-
-            self.directory = _directory
-            self.coverage_values_file = _coverage
-            self.classified_values_file = _classified
-            
         else:
-            self.separator = separator
-            self.directory, self.coverage_values_file = self.parse_directory(
-                        directory=directory, 
-                        file_included_in_directory=file_included_in_directory, 
-                        coverage_values_file=coverage_values_file
-                    )
+            self.coverage_values_file, self.directory = self.parse_directory(
+                                                        directory=directory, 
+                                                        file_included_in_directory=file_included_in_directory, 
+                                                        coverage_values_file=coverage_values_file
+                                                    )
             
-        self.dataframe = self.load_dataframe(
-                            norm=norm,
-                            sort=sort,
-                            index=index,
-                            create_folder=create_folder,
-                            export_file=export_file,
-                            file_included_in_directory=file_included_in_directory,
-                            mock=mock
-                        )
+        self.load_dataframe(
+                        norm=norm,
+                        sort=sort,
+                        index=index,
+                        create_folder=create_folder,
+                        export_file=export_file,
+                        file_included_in_directory=file_included_in_directory,
+                        mock=mock
+                    )
 
         if filter > 0:
             self.dataframe = self.filter_samples(filter)
+        
+        self.extract_values(
+                train=train, index=index
+            )
 
-        self.extract_values(train, mock)
-        # self.coverage_values, self.classified_values = 
         self.export(export_file=export_file, train=train)
     
+
     def parse_directory(self, directory, coverage_values_file, 
                     file_included_in_directory):
         '''
-        Parses directory and extracts the file path and file
+        Parses directory and extracts file path and file
         '''
 
         if file_included_in_directory:
@@ -122,8 +119,21 @@ class Coverage:
             _file = coverage_values_file
             _directory = directory
 
-        return _directory, _file
+        # self.coverage_values_file = _file
 
+        return _file, _directory
+
+    def is_dataframe_OK(self):
+        try:
+            self.dataframe['Classification']
+        except Exception as e:
+            raise KeyError(
+            """ Unfortunately, your dataframe does not contain the necessary
+            column '%s.' Since this is your training data, you
+            need to redefine your column that contains the classified
+            values to the column '%s'. Otherwise, your dataframe won't be
+            classified. """ %(e, e)
+            )
 
     def delete_files(self, create_folder, export_file):
         '''
@@ -132,18 +142,8 @@ class Coverage:
         is particularly helpful when inputting the dataframe into a manifold
         learning algorithm
         '''
-        D = lambda string: os.path.join(self.directory, string)
-        coverage_file_path = D(self.coverage_values_file)
-        classified_values_file_path = D(self.classified_values_file)
 
-        #makes sure files are in the path so they can be deleted
-        if not os.path.exists(classified_values_file_path):
-            raise Exception(
-                """It appears that the file '%s' that stores each gene's 
-                classified values for your dataset is not in your directory '%s'
-                """ %(self.classified_values_file, self.directory)
-                )
-        
+        coverage_file_path = os.path.join(self.directory, self.coverage_values_file)
         if not os.path.exists(coverage_file_path):
             raise Exception(
                 """It appears that the file '%s' that stores your dataset's 
@@ -152,11 +152,10 @@ class Coverage:
                 )
 
         if not create_folder and not export_file:
-            os.remove(classified_values_file_path)
             os.remove(coverage_file_path)
             print(
-                "Your files '%s' and '%s' were deleted successfully" 
-                %(self.coverage_values_file, self.classified_values_file)
+                "Your files '%s' was deleted successfully" 
+                %(self.coverage_values_file)
             )
 
 
@@ -167,10 +166,8 @@ class Coverage:
         Inputs:
             index (str): the preferred column that indexes the dataframe
         '''
-        # refactors the joined path into a nice lambda function
-        D = lambda string: os.path.join(self.directory, string)
         # checks if the inputted directory contains a file
-        path = D(self.coverage_values_file)
+        path = os.path.join(self.directory, self.coverage_values_file)
         df = pd.read_csv(
                 r"" + path, sep=self.separator, engine='python'
             )
@@ -182,7 +179,8 @@ class Coverage:
         # deletes generated files if user only wants to extract the dataframe
         if mock:
             self.delete_files(create_folder, export_file)
-        return df
+
+        self.dataframe = df
 
 
     def filter_samples(self, filter=0):
@@ -195,35 +193,25 @@ class Coverage:
         '''
         criteria = (self.dataframe.median() >= filter)
         return self.dataframe[criteria.index[criteria]]
-
-    def extract_values(self, train, mock):
-        # ensures there are some classification values when loading a personal dataset
-        F = lambda dataframe: dataframe.to_numpy()
+    
+    def extract_values(self, train, index):
+        convert = lambda dataframe: dataframe.to_numpy()
         if train:
-            try:
-                _classified_values = F(self.dataframe['Classification'])
-                _coverage_values = F(self.dataframe.drop('Classification', axis=1))
-                return _coverage_values, _classified_values
-
-            except Exception as e:
-                raise KeyError(
-                """ Unfortunately, your dataframe does not contain the necessary
-                dataframe column '%s.' Since this is your training data, you
-                need to redefine your column that contains the classified
-                values to the column '%s'. Otherwise, your dataframe won't be
-                classified. """ %(e, e)
-            )
-
+            self.is_dataframe_OK()
+            f = self.dataframe['Classification'].reset_index(index)
+            self.classified_values_dataframe = f.set_index(index)
+            self.coverage_values_dataframe = self.dataframe.drop('Classification', axis=1)
+            self.coverage_values = convert(self.coverage_values_dataframe)
+            self.classified_values = convert(self.classified_values_dataframe)
         else:
-            _classified_values = 0
-            _coverage_values = F(self.dataframe)
-            return _coverage_values, _classified_values
+            self.coverage_values_dataframe = self.dataframe
+            self.classified_values_dataframe = None
 
 
     def create_mock_data(self, train, directory, rows, columns, coverage_values_file, 
                         create_folder, folder_name, index, file_included_in_directory):
         
-        _directory, _ = self.parse_directory(
+        _, _directory = self.parse_directory(
                         directory=directory, 
                         file_included_in_directory=file_included_in_directory, 
                         coverage_values_file=coverage_values_file
@@ -245,10 +233,9 @@ class Coverage:
                 create_folder=create_folder,
                 folder_name=folder_name
             )
-            F.generate_data(index=index)
 
-        return F.directory, F.coverage_values_file, F.classified_values_file
-
+        self.directory = F.directory
+        self.coverage_values_file = F.coverage_values_file
 
 
     def export(self, export_file, train):
@@ -264,12 +251,13 @@ class Coverage:
         D = lambda string: os.path.join(self.directory, string)
         # exports the dataframe
         if export_file:
-            t = self.dataframe.transpose()
+            t = self.coverage_values_dataframe.transpose()
             t.columns = 'gene_' + t.columns.astype(str)
             df = t.transpose()
             df.to_csv(D(self.coverage_values_file), sep='\t')
-
-        # exports the additional layer file for anvi'o
-        if self.classified_values_file is not None:
-            f = pd.read_csv(D(self.classified_values_file), sep='\t')
-            f.to_csv(D(self.classified_values_file), sep='\t', index=False)
+        
+        if self.classified_values_dataframe is not None:
+            classified_value_file_name = 'classified_' + self.coverage_values_file
+            self.classified_values_dataframe.to_csv(
+                classified_value_file_name, sep='\t', index=False
+            )

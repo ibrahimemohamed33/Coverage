@@ -33,7 +33,7 @@ class MockData:
             )
 
         self.coverage_values_file = self.manage.coverage_values_file_name
-        self.classified_values_file = self.manage.classified_values_file_name
+        # self.classified_values_file = self.manage.classified_values_file_name
         self.directory = self.manage.path
         self.generate_data()
 
@@ -54,29 +54,18 @@ class MockData:
         
         metagenome_labels = [index] + [
             'metagenome_%d' %(i) for i in range(self.columns)
-        ] 
+        ] + classification_label
 
         coverage_values = []
-        classified_values = []
         #generates the rows of randomized data 
         for j in range(self.rows):
             gene_name = 'gene__%d' %(j)
             # creates the list of randomized data
             p = MockValues(self.columns)
-            coverage_values.append([gene_name] + p.values)
-            # stores the classified variable alongside the gene's
-            classified_values.append([gene_name] + [p.classifier])
+            coverage_values.append([gene_name] + p.values + [p.classifier])
 
         # writes out column's name in addition to the gene's coverage values
         with open(self.coverage_values_file, 'w') as f:
             write = csv.writer(f, delimiter=',')
             write.writerow(metagenome_labels)
             write.writerows(coverage_values)
-        
-        # writes additional layer file for anvi'o
-        with open(self.classified_values_file, 'w') as f:
-            write = csv.writer(f, delimiter='\t')
-            write.writerow(classification_label)
-            write.writerows(classified_values)
-
-   
