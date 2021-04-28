@@ -65,9 +65,10 @@ class Coverage:
 
 
         '''
-        self.separator = separator
+        
 
         if mock:
+            self.separator = '\t'
             self.create_mock_data(
                             train=train, 
                             directory=directory, 
@@ -85,6 +86,7 @@ class Coverage:
                                                         file_included_in_directory=file_included_in_directory, 
                                                         coverage_values_file=coverage_values_file
                                                     )
+            self.separator = separator
             
         self.load_dataframe(
                         norm=norm,
@@ -100,7 +102,7 @@ class Coverage:
             self.dataframe = self.filter_samples(filter)
         
         self.extract_values(
-                train=train, index=index
+                train=train, index=index, norm=norm
             )
 
         self.export(export_file=export_file, train=train)
@@ -118,8 +120,6 @@ class Coverage:
         else:
             _file = coverage_values_file
             _directory = directory
-
-        # self.coverage_values_file = _file
 
         return _file, _directory
 
@@ -171,15 +171,14 @@ class Coverage:
         df = pd.read_csv(
                 r"" + path, sep=self.separator, engine='python'
             )
+        
         df = df.set_index(index)
-        if norm:
-            df = df/df.sum()
         if sort:
             df = df.sort_values(by=list(df.columns), axis=0)
         # deletes generated files if user only wants to extract the dataframe
         if mock:
             self.delete_files(create_folder, export_file)
-
+            
         self.dataframe = df
 
 
@@ -194,13 +193,21 @@ class Coverage:
         criteria = (self.dataframe.median() >= filter)
         return self.dataframe[criteria.index[criteria]]
     
-    def extract_values(self, train, index):
+
+    def extract_values(self, train, index, norm):
         convert = lambda dataframe: dataframe.to_numpy()
         if train:
             self.is_dataframe_OK()
-            f = self.dataframe['Classification'].reset_index(index)
-            self.classified_values_dataframe = f.set_index(index)
-            self.coverage_values_dataframe = self.dataframe.drop('Classification', axis=1)
+
+            classified_df = pd.DataFrame(self.dataframe[ 'Classification'])
+            classified_df = classified_df.reset_index()
+            coverage_df = self.dataframe.drop('Classification', axis=1)
+            if norm: 
+                coverage_df = coverage_df/coverage_df.sum()
+
+            self.classified_values_dataframe = classified_df
+            self.coverage_values_dataframe = coverage_df
+            
             self.coverage_values = convert(self.coverage_values_dataframe)
             self.classified_values = convert(self.classified_values_dataframe)
         else:
@@ -233,6 +240,8 @@ class Coverage:
                 create_folder=create_folder,
                 folder_name=folder_name
             )
+            
+            F.generate_data(index)
 
         self.directory = F.directory
         self.coverage_values_file = F.coverage_values_file

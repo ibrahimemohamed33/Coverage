@@ -33,9 +33,7 @@ class MockData:
             )
 
         self.coverage_values_file = self.manage.coverage_values_file_name
-        # self.classified_values_file = self.manage.classified_values_file_name
         self.directory = self.manage.path
-        self.generate_data()
 
 
     def generate_data(self, index='gene_callers_id'):
@@ -66,6 +64,6 @@ class MockData:
 
         # writes out column's name in addition to the gene's coverage values
         with open(self.coverage_values_file, 'w') as f:
-            write = csv.writer(f, delimiter=',')
+            write = csv.writer(f, delimiter='\t')
             write.writerow(metagenome_labels)
             write.writerows(coverage_values)
