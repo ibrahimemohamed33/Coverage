@@ -1,4 +1,7 @@
 import os
+import sys
+import fileinput
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -105,7 +108,7 @@ class Coverage:
                 train=train, index=index, norm=norm
             )
 
-        self.export(export_file=export_file, train=train)
+        self.export(export_file=export_file, train=train, mock=mock)
     
 
     def parse_directory(self, directory, coverage_values_file, 
@@ -157,7 +160,7 @@ class Coverage:
                 "Your files '%s' was deleted successfully" 
                 %(self.coverage_values_file)
             )
-
+   
 
     def load_dataframe(self, norm, sort,  index, create_folder, export_file,
                        file_included_in_directory, mock=False):
@@ -199,15 +202,15 @@ class Coverage:
         if train:
             self.is_dataframe_OK()
 
-            classified_df = pd.DataFrame(self.dataframe[ 'Classification'])
-            classified_df = classified_df.reset_index()
+            classified_df = pd.DataFrame(self.dataframe['Classification'])
+            # classified_df = classified_df.reset_index()
             coverage_df = self.dataframe.drop('Classification', axis=1)
             if norm: 
                 coverage_df = coverage_df/coverage_df.sum()
 
             self.classified_values_dataframe = classified_df
             self.coverage_values_dataframe = coverage_df
-            
+
             self.coverage_values = convert(self.coverage_values_dataframe)
             self.classified_values = convert(self.classified_values_dataframe)
         else:
@@ -245,9 +248,18 @@ class Coverage:
 
         self.directory = F.directory
         self.coverage_values_file = F.coverage_values_file
+    
+    def adjust_columns(self, dataframe, mock):
+        t = dataframe.transpose()
+        if mock:
+            t.columns = t.columns.astype(str)
+        else:
+            t.columns = 'gene__' + t.columns.astype(str)
+        
+        return t.transpose()
 
 
-    def export(self, export_file, train):
+    def export(self, export_file, train, mock):
         '''
         Exports the dataframe into a tab-separated .txt file for anvi'o
         to generate a newick-tree file, which, in turn, leads to a clustered
@@ -260,13 +272,17 @@ class Coverage:
         D = lambda string: os.path.join(self.directory, string)
         # exports the dataframe
         if export_file:
-            t = self.coverage_values_dataframe.transpose()
-            t.columns = 'gene_' + t.columns.astype(str)
-            df = t.transpose()
-            df.to_csv(D(self.coverage_values_file), sep='\t')
+            df = self.adjust_columns(self.coverage_values_dataframe, mock)
+            if not mock:
+                df.to_csv(D('new_' + self.coverage_values_file), sep='\t')
+            else:
+                df.to_csv(D(self.coverage_values_file), sep='\t')
+
         
         if self.classified_values_dataframe is not None:
-            classified_value_file_name = 'classified_' + self.coverage_values_file
-            self.classified_values_dataframe.to_csv(
-                classified_value_file_name, sep='\t', index=False
+            self.classified_value_file_name = 'classified_' + self.coverage_values_file
+            f = self.adjust_columns(self.classified_values_dataframe, mock)
+            f = f.reset_index()
+            f.to_csv(
+                D(self.classified_value_file_name), sep='\t', index=False
             )
