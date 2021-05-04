@@ -1,8 +1,10 @@
+import os
+
 import numpy as np
 import pandas as pd
-import sys
 
-from coverage import Coverage
+
+from coverage import Coverage, adjust_columns
 from sklearn import manifold
 
 
@@ -12,7 +14,6 @@ class Embedding:
     def __init__(self, 
                 n_neighbors, 
                 directory, 
-                reduced_dimension=3,
                 path='auto',
                 train=True,
                 file_included_in_directory=False,
@@ -20,6 +21,7 @@ class Embedding:
                 file_name='Untitled.csv', 
                 index='gene_callers_id',
                 create_folder=False, 
+                export_file=True,
                 folder_name='folder',
                 separator=None, 
                 norm=True, 
@@ -33,6 +35,9 @@ class Embedding:
         into lower dimension using the Isomap algorithm
         '''
 
+        self.directory = directory
+        self.folder_name = folder_name
+
         self.coverage = Coverage(
             directory=directory,
             norm=norm,
@@ -45,26 +50,30 @@ class Embedding:
             rows=rows,
             columns=columns,
             train=train,
-            export_file=False,
+            export_file=True,
             create_folder=False,
             folder_name=folder_name,
             separator=separator
             )
 
-
         self.dataframe = self.coverage.coverage_values_dataframe
+        _, self.dimension = self.dataframe.shape
+        self.num_components = self.projected_number_of_components()
+
         self.data = self.coverage.coverage_values
         self.classifers = self.coverage.classified_values
         
         self.is_path_OK(path)
+
         self.embedded_vectors = self.embed(
                 n_neighbors, 
-                num_components=reduced_dimension, 
                 path_method=path, 
                 mock=mock
             )
         
         self.embedded_dataframe = self.embed_into_dataframe()
+
+        self.export(export_file, mock)
     
     def is_path_OK(self, path):
         '''
@@ -73,10 +82,10 @@ class Embedding:
 
         if path not in valid_path_methods:
             raise Exception("""It appears that your path method '%s' is not a valid path. 
-                               Try setting your path to 'auto' or 'D' """ 
-                            %(path))
+                               Try setting your path to 'auto' or 'D' """ %(path))
+    
 
-    def adjust_num_components(self, num_components):
+    def projected_number_of_components(self):
         '''
         Finds the interval [min_num_components, max_num_components] for which
         num_components lie in. From there, the function creates an inclusion map
@@ -84,78 +93,98 @@ class Embedding:
         '''
         min_num_components, step = 10, 20
         max_num_components = min_num_components + step
-        while num_components > max_num_components or num_components < min_num_components:
+        while self.dimension > max_num_components or self.dimension < min_num_components:
             if max_num_components > 150:
                 break
             min_num_components += step
             max_num_components += step
 
-        # self.inclusion_map(num_components, max_num_components)
-        return max_num_components
+        delta = lambda y: abs(self.dimension - y)
+        # determines whether to round down or up 
+        if delta(min_num_components) < delta(max_num_components):
+            return min_num_components
+        else:
+            return max_num_components
 
   
-    def inclusion_map(self, dimension, num_components):
-        if dimension < num_components:
-            for i in range(dimension + 1, num_components - dimension + 1):
-                    metagenome_name = 'metagenome__%d' %(i)
-                    self.dataframe[metagenome_name] = 0
+    def inclusion_map(self):
+        self.is_dimension_OK()
+        if self.dimension < self.num_components:
+            for i in range(self.dimension + 1, self.num_components + 1):
+                metagenome_name = 'metagenome__%d' %(i)
+                self.dataframe[metagenome_name] = 0
 
-    def is_dimension_OK(self, dimension):
-        if dimension < 10:
+    def is_dimension_OK(self):
+        if self.dimension < 10:
             raise ValueError(
                 """While we would ideally perform the algorithm
                     on any dataset, the sad truth is that your dimension size 
                     '%d' is too small"""
-                    %(dimension)
+                    %(self.dimension)
                 )
-        if dimension > 150:
+        if self.dimension > 150:
             raise ValueError(
                 """While we would ideally perform the algorithm
                     on any dataset, the sad truth is that your dimension size 
                     '%d' is too large"""
-                    %(dimension)
+                    %(self.dimension)
                 )
 
     
-    def final_inclusion(self, num_components):
-        '''
-        Maps d-dimensional space into n-dimensional by appending 0's to the 
-        remaining (n-d)-values
-        '''
-        _, dimension = self.dataframe.shape
-        self.is_dimension_OK(dimension)
-
-        num_components = self.adjust_num_components(num_components)
-        if dimension < num_components:
-            self.inclusion_map(dimension, num_components)
-    
-    def embed(self, n_neighbors, num_components, path_method, mock):
+    def embed(self, n_neighbors, path_method, mock):
         '''
         Embeds d-dimensional data into n-dimensional data, where n <= d
         and n represents the number of components
         '''
-        # checks if the dataframe's size is large enough for an embedding
-        self.final_inclusion(num_components)
-
+        self.inclusion_map()
         embedding = manifold.Isomap(
                 n_neighbors=n_neighbors,
-                n_components=num_components,
+                n_components=self.num_components,
                 path_method=path_method
             )
         if mock:
-            t = embedding.fit_transform(self.dataframe[1:])
+            t = embedding.fit_transform(self.dataframe[:])
         else:
-            f = embedding.fit(self.dataframe[1:])
-            t = f.transform(self.dataframe[1:])
-        
+            fit = embedding.fit(self.dataframe[:])
+            t = fit.transform(self.dataframe[:])
+
         return t
+    
+    def adjusted_indices(self):
+        reduced_indices = [
+            'reduced_' + i for i in self.dataframe.index
+        ]
+
+        index_name = 'Reduced_' + self.dataframe.index.name
+
+        return index_name, reduced_indices
+
+        
 
     def embed_into_dataframe(self):
         '''
         Turns embedded data into dataframe
         '''
-
+        
         _, dimension = self.embedded_vectors.shape
-        columns = ["Reduced__Column__%d" %(i) for i in range(dimension)]
-        df = pd.DataFrame(data=self.embedded_vectors, columns=columns)
+
+        labels = [
+            "Reduced__Column__%d" %(i) for i in range(dimension)
+            ]
+
+        df = pd.DataFrame(data=self.embedded_vectors, columns=labels)
+
+        index_name, reduced_indices = self.adjusted_indices()
+        df[index_name] = reduced_indices
+        df = df.set_index(index_name)
+
         return df
+    
+    def export(self, export_file, mock):
+        path = os.path.join(self.directory, self.folder_name)
+        D = lambda string: os.path.join(path, string)
+        name_of_file = 'embedded' + self.coverage.coverage_values_file
+        # exports dataframe
+        if export_file:
+            df = adjust_columns(self.embedded_dataframe, mock)
+            df.to_csv(D(name_of_file), sep='\t')

@@ -35,7 +35,7 @@ class Classifier:
         self.reduced = Embedding(n_neighbors, 
                                 directory, 
                                 path=path,
-                                dimension=dimension,
+                                reduced_dimension=dimension,
                                 train=train,
                                 mock=mock,
                                 file_name=file_name, 
@@ -56,18 +56,22 @@ class Classifier:
         else:
             self.dataframe = self.reduced.dataframe
             self.X, self.y = self.reduced.data, self.reduced.classifers
+        
+        self.fit_data()
 
     def fit_data(self):
         '''
         Performs the random forest classifier
         '''
         
-        self.F = RandomForestClassifier(n_estimators=self.n_estimators,
-                                        max_depth=self.max_depth)
+        self.model = RandomForestClassifier(n_estimators=self.n_estimators,
+                                            max_depth=self.max_depth)
+                                            
         if self.train:
-            self.F.fit(self.X, self.y)
+            self.model.fit(self.X, self.y)
         else:
-            self.F.apply(self.X)
+            self.model.apply(self.X)
+
 
 
 

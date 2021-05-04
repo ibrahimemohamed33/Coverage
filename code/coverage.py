@@ -9,6 +9,16 @@ import seaborn as sns
 
 from mock_training_data import MockData
 
+
+def adjust_columns(dataframe, mock):
+    t = dataframe.transpose()
+    if mock:
+        t.columns = t.columns.astype(str)
+    else:
+        t.columns = 'gene__' + t.columns.astype(str)
+    
+    return t.transpose()
+
 class Coverage:
     def __init__(self, 
                 directory=os.getcwd(), 
@@ -108,7 +118,10 @@ class Coverage:
                 train=train, index=index, norm=norm
             )
 
-        self.export(export_file=export_file, train=train, mock=mock)
+        self.export(
+            export_file=export_file, train=train, mock=mock, 
+            create_folder=create_folder
+            )
     
 
     def parse_directory(self, directory, coverage_values_file, 
@@ -147,6 +160,8 @@ class Coverage:
         '''
 
         coverage_file_path = os.path.join(self.directory, self.coverage_values_file)
+        classified_path = os.path.join(self.directory, self.classified_value_file_name)
+
         if not os.path.exists(coverage_file_path):
             raise Exception(
                 """It appears that the file '%s' that stores your dataset's 
@@ -156,9 +171,10 @@ class Coverage:
 
         if not create_folder and not export_file:
             os.remove(coverage_file_path)
+            os.remove(classified_path)
             print(
-                "Your files '%s' was deleted successfully" 
-                %(self.coverage_values_file)
+                "Your files '%s' and '%s' were deleted successfully" 
+                %(self.coverage_values_file, self.classified_value_file_name)
             )
    
 
@@ -178,10 +194,7 @@ class Coverage:
         df = df.set_index(index)
         if sort:
             df = df.sort_values(by=list(df.columns), axis=0)
-        # deletes generated files if user only wants to extract the dataframe
-        if mock:
-            self.delete_files(create_folder, export_file)
-            
+
         self.dataframe = df
 
 
@@ -203,8 +216,8 @@ class Coverage:
             self.is_dataframe_OK()
 
             classified_df = pd.DataFrame(self.dataframe['Classification'])
-            # classified_df = classified_df.reset_index()
             coverage_df = self.dataframe.drop('Classification', axis=1)
+
             if norm: 
                 coverage_df = coverage_df/coverage_df.sum()
 
@@ -213,6 +226,7 @@ class Coverage:
 
             self.coverage_values = convert(self.coverage_values_dataframe)
             self.classified_values = convert(self.classified_values_dataframe)
+
         else:
             self.coverage_values_dataframe = self.dataframe
             self.classified_values_dataframe = None
@@ -249,17 +263,10 @@ class Coverage:
         self.directory = F.directory
         self.coverage_values_file = F.coverage_values_file
     
-    def adjust_columns(self, dataframe, mock):
-        t = dataframe.transpose()
-        if mock:
-            t.columns = t.columns.astype(str)
-        else:
-            t.columns = 'gene__' + t.columns.astype(str)
-        
-        return t.transpose()
+    
 
 
-    def export(self, export_file, train, mock):
+    def export(self, export_file, train, mock, create_folder):
         '''
         Exports the dataframe into a tab-separated .txt file for anvi'o
         to generate a newick-tree file, which, in turn, leads to a clustered
@@ -270,9 +277,9 @@ class Coverage:
 
         '''
         D = lambda string: os.path.join(self.directory, string)
-        # exports the dataframe
+        # exports dataframe
         if export_file:
-            df = self.adjust_columns(self.coverage_values_dataframe, mock)
+            df = adjust_columns(self.coverage_values_dataframe, mock)
             if not mock:
                 df.to_csv(D('new_' + self.coverage_values_file), sep='\t')
             else:
@@ -281,8 +288,13 @@ class Coverage:
         
         if self.classified_values_dataframe is not None:
             self.classified_value_file_name = 'classified_' + self.coverage_values_file
-            f = self.adjust_columns(self.classified_values_dataframe, mock)
+            f = adjust_columns(self.classified_values_dataframe, mock)
             f = f.reset_index()
             f.to_csv(
                 D(self.classified_value_file_name), sep='\t', index=False
             )
+
+        # deletes generated files if user only wants to extract the dataframe
+        if mock:
+            self.delete_files(create_folder, export_file)
+            
