@@ -160,7 +160,7 @@ class Coverage:
         '''
 
         coverage_file_path = os.path.join(self.directory, self.coverage_values_file)
-        classified_path = os.path.join(self.directory, self.classified_value_file_name)
+        classified_path = os.path.join(self.directory, self.classified_values_file_name)
 
         if not os.path.exists(coverage_file_path):
             raise Exception(
@@ -174,7 +174,7 @@ class Coverage:
             os.remove(classified_path)
             print(
                 "Your files '%s' and '%s' were deleted successfully" 
-                %(self.coverage_values_file, self.classified_value_file_name)
+                %(self.coverage_values_file, self.classified_values_file_name)
             )
    
 
@@ -287,11 +287,11 @@ class Coverage:
 
         
         if self.classified_values_dataframe is not None:
-            self.classified_value_file_name = 'classified_' + self.coverage_values_file
+            self.classified_values_file_name = 'classified_' + self.coverage_values_file
             f = adjust_columns(self.classified_values_dataframe, mock)
             f = f.reset_index()
             f.to_csv(
-                D(self.classified_value_file_name), sep='\t', index=False
+                D(self.classified_values_file_name), sep='\t', index=False
             )
 
         # deletes generated files if user only wants to extract the dataframe
