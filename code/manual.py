@@ -1,12 +1,11 @@
 import os
 import re
+import pandas as pd
 
-special_newick_characters = r'[(),]+([^;:]+)\b'
 
-
-class Tree:
+class ExtractGenes:
     '''
-    Instantiates the Tree class which returns the genes that have undergone
+    Instantiates the ExtractGenes class which returns the genes that have undergone
     the hierarchical clustering in anvio. This class ease the task of manually
     classifying genes.
     '''
@@ -19,6 +18,8 @@ class Tree:
         extracts the genes from the newick tree format and returns them as a 
         clean list
         '''
+        special_newick_characters = r'[(),]+([^;:]+)\b'
+
         formatted_tree = str(
             open(self.directory).readlines()
             )
@@ -50,3 +51,25 @@ class Tree:
         adjusted_list = gene_list[gene1_index: gene2_index + 1]
         
         return adjusted_list
+
+
+class AdjustDataframe:
+    '''
+    Instantiates the AdjustDataframe class which sorts the dataframe in the
+    .txt file for manual classification. 
+    '''
+    def __init__(self, tree_file, directory, coverage_values_file=None):
+
+        self.tree = ExtractGenes(directory=directory, tree_file=tree_file)
+        self.coverage_values_file = os.path.join(directory, coverage_values_file)
+        self.dataframe = pd.read_csv(self.coverage_values_file, sep='\t').set_index('gene_callers_id')
+
+        self.genes = self.tree.extract_genes()
+        self.adjust(coverage_values_file)
+    
+    def adjust(self, coverage_values_file):
+        self.dataframe = self.dataframe.reindex(self.genes)
+        self.dataframe.to_csv(
+           self.coverage_values_file, sep='\t'
+        )
+
