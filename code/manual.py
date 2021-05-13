@@ -58,18 +58,48 @@ class AdjustDataframe:
     Instantiates the AdjustDataframe class which sorts the dataframe in the
     .txt file for manual classification. 
     '''
-    def __init__(self, tree_file, directory, coverage_values_file=None):
+    def __init__(self, tree_file, directory, coverage_values_file):
 
         self.tree = ExtractGenes(directory=directory, tree_file=tree_file)
         self.coverage_values_file = os.path.join(directory, coverage_values_file)
-        self.dataframe = pd.read_csv(self.coverage_values_file, sep='\t').set_index('gene_callers_id')
+        self.dataframe = pd.read_csv(self.coverage_values_file, sep='\t')
 
         self.genes = self.tree.extract_genes()
         self.adjust(coverage_values_file)
     
     def adjust(self, coverage_values_file):
-        self.dataframe = self.dataframe.reindex(self.genes)
+        self.dataframe.index = self.genes
         self.dataframe.to_csv(
            self.coverage_values_file, sep='\t'
         )
+
+class AdjustClassification:
+    
+    def __init__(self, tree_file, directory, coverage_values_file=None, 
+                classified_values_file=None):
+
+        self.adjusted_dataframe = AdjustDataframe(tree_file=tree_file, 
+                                                  directory=directory, 
+                                                  coverage_values_file=coverage_values_file)
+
+        self.classified_values_file = os.path.join(directory, classified_values_file)
+        self.dataframe = self.adjusted_dataframe.dataframe
+    
+    def export_classifier(self, classified_file):
+        try:
+            self.classified = pd.DataFrame(self.dataframe['Classification'])
+        except Exception as e:
+            raise KeyError(
+                """It appears you tried to export the classifier before manually 
+                 classifying the data itself, and thus not creating the column  
+                 containing '%s'. What you need to do, especially since this 
+                 involves manually classifying training data itself, is to use
+                 anvio and MANUALLY input the classifiers into a new column '%s'. 
+                 We know it sucks, but we're trying our best :/
+                 """
+                %(e, e)
+            )
+
+        self.classified.to_csv(self.classified_values_file, sep='\t')
+        self.dataframe = self.dataframe.drop('Classification', axis=1)
 

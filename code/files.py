@@ -22,12 +22,13 @@ class ConvertPath:
         converted_path = self.convert_directory(path)
         if not os.path.isdir(os.path.abspath(converted_path)):
             D = lambda string, string1: os.path.join(string, string1)
-            raise Exception(
+            raise FileNotFoundError(
                 """Unfortunately, the path '%s' you inputted is not a valid path
                 name, at least within the directory '%s'. This means
                 that your new path '%s' does not exist, nor does the absolute path
                 %s exists. You should probably change the way you configure your
-                path and that may do the trick"""
+                path and that may do the trick
+                """
                 %(path, os.getcwd(), os.path.abspath(path), D(os.getcwd(), path))
             )
 
@@ -35,12 +36,14 @@ class ConvertPath:
         D = lambda string, string1: os.path.join(string, string1)
         converted_path = self.convert_directory(path)
         if not os.path.isdir(converted_path):
-            raise Exception(
-            """Unfortunately, the absolute path '%s' you inputted is not a valid path
+            raise FileNotFoundError(
+            """
+            Unfortunately, the absolute path '%s' you inputted is not a valid path
             name, at least within the directory '%s'. This means
             that your new path '%s' does not exist, nor does the absolute path
             '%s' exists. You should probably change the way you configure your
-            path and that may do the trick"""
+            path and that may do the trick
+            """
             %(path, os.getcwd(), converted_path, D(os.getcwd(), converted_path))
         )
         

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from mock_training_data import MockData
+from manual import AdjustClassification 
 
 
 def adjust_columns(dataframe, mock):
@@ -78,7 +79,7 @@ class Coverage:
 
 
         '''
-        
+
 
         if mock:
             self.separator = '\t'
@@ -122,7 +123,7 @@ class Coverage:
             export_file=export_file, train=train, mock=mock, 
             create_folder=create_folder
             )
-    
+        
 
     def parse_directory(self, directory, coverage_values_file, 
                     file_included_in_directory):
@@ -144,11 +145,13 @@ class Coverage:
             self.dataframe['Classification']
         except Exception as e:
             raise KeyError(
-            """ Unfortunately, your dataframe does not contain the necessary
-            column '%s.' Since this is your training data, you
-            need to redefine your column that contains the classified
-            values to the column '%s'. Otherwise, your dataframe won't be
-            classified. """ %(e, e)
+                """ Unfortunately, your dataframe does not contain the necessary
+                column '%s.' Since this is your training data, you
+                need to redefine your column that contains the classified
+                values to the column '%s'. Otherwise, your dataframe won't be
+                classified. 
+                """ 
+                %(e, e)
             )
 
     def delete_files(self, create_folder, export_file):
@@ -164,10 +167,11 @@ class Coverage:
 
         if not os.path.exists(coverage_file_path):
             raise Exception(
-                """It appears that the file '%s' that stores your dataset's 
+                """ It appears that the file '%s' that stores your dataset's 
                 coverage values is not in your directory '%s'
-                """ %(self.coverage_values_file, self.directory)
-                )
+                """ 
+                %(self.coverage_values_file, self.directory)
+            )
 
         if not create_folder and not export_file:
             os.remove(coverage_file_path)
@@ -211,7 +215,6 @@ class Coverage:
     
 
     def extract_values(self, train, index, norm):
-        convert = lambda dataframe: dataframe.to_numpy()
         if train:
             self.is_dataframe_OK()
 
@@ -223,10 +226,6 @@ class Coverage:
 
             self.classified_values_dataframe = classified_df
             self.coverage_values_dataframe = coverage_df
-
-            self.coverage_values = convert(self.coverage_values_dataframe)
-            self.classified_values = convert(self.classified_values_dataframe)
-
         else:
             self.coverage_values_dataframe = self.dataframe
             self.classified_values_dataframe = None
@@ -243,10 +242,11 @@ class Coverage:
 
         if not train:
                 raise Exception(
-                """It appears that you meant to generate mock data with the 
-                purpose of testing it against the algorithm. Unfortunately, 
-                the mock data was created with the intention of training the
-                algorithm, not to test it whatsoever"""
+                    """It appears that you meant to generate mock data with the 
+                    purpose of testing it against the algorithm. Unfortunately, 
+                    the mock data was created with the intention of training the
+                    algorithm, not to test it whatsoever
+                    """
                 ) 
 
         else:
@@ -263,8 +263,6 @@ class Coverage:
         self.directory = F.directory
         self.coverage_values_file = F.coverage_values_file
     
-    
-
 
     def export(self, export_file, train, mock, create_folder):
         '''
@@ -297,4 +295,3 @@ class Coverage:
         # deletes generated files if user only wants to extract the dataframe
         if mock:
             self.delete_files(create_folder, export_file)
-            

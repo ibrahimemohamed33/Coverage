@@ -2,13 +2,20 @@ import os
 
 import numpy as np
 import pandas as pd
+import shutil
 
-
-from coverage import Coverage, adjust_columns
+from manual import AdjustClassification 
+from coverage import Coverage
 from sklearn import manifold
 
 
 valid_path_methods = ["auto", "D", "FW"]
+
+def adjust_columns(dataframe, mock):
+    t = dataframe.transpose()
+    t.columns = t.columns.astype(str)
+    return t.transpose()
+
 
 class Embedding:
     def __init__(self, 
@@ -29,40 +36,41 @@ class Embedding:
                 _filter=0, 
                 is_filtered=False,
                 rows=100, 
-                columns=100):
+                columns=100,
+                tree_file='tree.txt'):
         '''
         Class attempts to embed high-dimensional coverage values
         into lower dimension using the Isomap algorithm
         '''
+        self.train = train
+        self.tree_file = tree_file
 
         self.directory = directory
         self.folder_name = folder_name
 
-        self.coverage = Coverage(
-            directory=directory,
-            norm=norm,
-            sort=sort,
-            filter=_filter,
-            coverage_values_file=file_name,
-            file_included_in_directory=file_included_in_directory,
-            index=index,
-            mock=mock,
-            rows=rows,
-            columns=columns,
-            train=train,
-            export_file=True,
-            create_folder=False,
-            folder_name=folder_name,
-            separator=separator
-            )
+        self.coverage = Coverage(directory=directory,
+                                norm=norm,
+                                sort=sort,
+                                filter=_filter,
+                                coverage_values_file=file_name,
+                                file_included_in_directory=file_included_in_directory,
+                                index=index,
+                                mock=mock,
+                                rows=rows,
+                                columns=columns,
+                                train=train,
+                                export_file=True,
+                                create_folder=False,
+                                folder_name=folder_name,
+                                separator=separator)       
 
         self.dataframe = self.coverage.coverage_values_dataframe
-        _, self.dimension = self.dataframe.shape
-        self.num_components = self.projected_number_of_components()
-
-        self.data = self.coverage.coverage_values
-        self.classifers = self.coverage.classified_values
+        self.coverage_values_file = self.coverage.coverage_values_file
+        self.classified_values_file = self.coverage.classified_values_file_name
         
+
+        _, self.dimension = self.dataframe.shape
+        self.num_components = self.projected_number_of_components()        
         self.is_path_OK(path)
 
         self.embedded_vectors = self.embed(
@@ -72,7 +80,6 @@ class Embedding:
             )
         
         self.embedded_dataframe = self.embed_into_dataframe()
-
         self.export(export_file, mock)
     
     def is_path_OK(self, path):
@@ -81,8 +88,13 @@ class Embedding:
         '''
 
         if path not in valid_path_methods:
-            raise Exception("""It appears that your path method '%s' is not a valid path. 
-                               Try setting your path to 'auto' or 'D' """ %(path))
+            raise Exception(
+                """Your path method '%s' is not a valid method for the isomapping.
+                What you should do instead is set your path to the keywords
+                'auto' or 'D'. This will likely fix the issue
+                """ 
+                %(path)
+            )
     
 
     def projected_number_of_components(self):
@@ -117,18 +129,19 @@ class Embedding:
     def is_dimension_OK(self):
         if self.dimension < 10:
             raise ValueError(
-                """While we would ideally perform the algorithm
-                    on any dataset, the sad truth is that your dimension size 
-                    '%d' is too small"""
-                    %(self.dimension)
-                )
+                """While we would ideally perform the algorithm on any dataset, 
+                the sad truth is that your dimension size '%d' is too small
+                """
+                %(self.dimension)
+            )
+            
         if self.dimension > 150:
             raise ValueError(
-                """While we would ideally perform the algorithm
-                    on any dataset, the sad truth is that your dimension size 
-                    '%d' is too large"""
-                    %(self.dimension)
-                )
+                """While we would ideally perform the algorithm on any dataset, 
+                the sad truth is that your dimension size '%d' is too small
+                """
+                %(self.dimension)
+            )
 
     
     def embed(self, n_neighbors, path_method, mock):
@@ -152,9 +165,9 @@ class Embedding:
     
     def adjusted_indices(self):
         reduced_indices = [
-            'reduced_' + i for i in self.dataframe.index
+            'gene__reduced_%d' %(i) for i in self.dataframe.index
         ]
-
+        
         index_name = 'Reduced_' + self.dataframe.index.name
 
         return index_name, reduced_indices
@@ -165,26 +178,77 @@ class Embedding:
         '''
         Turns embedded data into dataframe
         '''
-        
-        _, dimension = self.embedded_vectors.shape
-
-        labels = [
-            "Reduced__Column__%d" %(i) for i in range(dimension)
-            ]
-
-        df = pd.DataFrame(data=self.embedded_vectors, columns=labels)
 
         index_name, reduced_indices = self.adjusted_indices()
+        _, dimension = self.embedded_vectors.shape
+        labels = ["Reduced__Column__%d" %(i) for i in range(dimension)]
+
+        df = pd.DataFrame(
+                data=self.embedded_vectors, columns=labels
+            )
+
         df[index_name] = reduced_indices
         df = df.set_index(index_name)
 
         return df
     
     def export(self, export_file, mock):
-        path = os.path.join(self.directory, self.folder_name)
-        D = lambda string: os.path.join(path, string)
-        name_of_file = 'embedded' + self.coverage.coverage_values_file
+        '''
+        Exports the embededd dataframe into a file containing coverage values
+        for manual classification
+        '''
+        
+        self.embedded_coverage_values_file = 'embedded_' + self.coverage_values_file
         # exports dataframe
         if export_file:
+            if os.path.exists(os.path.join(os.path.abspath(self.directory), self.embedded_coverage_values_file)):
+                os.remove(os.path.join(os.path.abspath(self.directory), self.embedded_coverage_values_file))
             df = adjust_columns(self.embedded_dataframe, mock)
-            df.to_csv(D(name_of_file), sep='\t')
+            df.to_csv(self.embedded_coverage_values_file , sep='\t')
+            shutil.move(self.embedded_coverage_values_file , os.path.abspath(self.directory))
+
+    
+    def is_tree_file_OK(self):
+        if not os.path.exists(os.path.join(self.directory, self.tree_file)):
+            raise FileNotFoundError(
+                """You did not go through the anvio interface to create a newick
+                tree format. If you did, then you probably did not name your 
+                tree_file parameter the same name as '%s', which can be a 
+                problem. Worst case scenario, you restart the process and look
+                at the necessary documentation at INSERT_LINK to create the 
+                newick tree
+                """
+                %(self.tree_file)
+            )
+
+    def adjusted_dataframe_and_classification(self):
+        '''
+        Adjusts training data so that the coverage values are clustered, 
+        using anvio clustering algorithm, and the dataframe is sorted 
+        Overall, this eases the process of manually inputting the data
+        '''
+        if self.train:
+            self.is_tree_file_OK()
+
+            self.F = AdjustClassification(
+                                    tree_file=self.tree_file, 
+                                    directory=self.directory,
+                                    coverage_values_file=self.embedded_coverage_values_file,
+                                    classified_values_file=self.classified_values_file)
+            
+            self.embedded_dataframe = self.F.dataframe
+
+    def export_classifier(self):
+        self.F.export_classifier(self.classified_values_file)
+
+    def convert_data(self):
+        '''
+        Using the sorted data and manually classified values, this adjusts the
+        embedded data before it is used to train the model
+        '''
+        self.adjusted_dataframe_and_classification()
+        convert = lambda dataframe: dataframe.to_numpy()
+        self.coverage_values = convert(self.embedded_dataframe)
+        if self.classified_values_dataframe is not None:
+            self.classified_values = convert(self.classified_values_dataframe)  
+    
