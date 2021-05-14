@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
+import joblib
 
+from coverage import epsilon
 from sklearn.ensemble import RandomForestClassifier
 from dimension import Embedding
 
@@ -23,16 +25,14 @@ class Classifier:
                 folder_name='folder',
                 separator=None, 
                 norm=True, 
-                sort=False, 
-                _filter=0, 
-                is_filtered=False,
+                _filter=epsilon, 
                 rows=100, 
                 columns=100):
         
         self.train = train
         self.n_estimators = n_estimators
         self.max_depth = max_depth
-        self.reduced = Embedding(n_neighbors, 
+        self.embedded = Embedding(n_neighbors, 
                                 directory, 
                                 path=path,
                                 reduced_dimension=dimension,
@@ -44,20 +44,21 @@ class Classifier:
                                 folder_name=folder_name,
                                 separator=separator, 
                                 norm=norm, 
-                                sort=sort, 
                                 _filter=_filter, 
-                                is_filtered=is_filtered,
                                 rows=rows, 
-                                columns=columns)
-        
-        if reduce:
-            self.dataframe = self.reduced.embedded_dataframe
-            self.X = self.reduced.embedded_vectors
-        else:
-            self.dataframe = self.reduced.dataframe
-            self.X, self.y = self.reduced.data, self.reduced.classifers
-        
+                                columns=columns, 
+                                tree_file='tree.txt')
+
+        self.directory = self.embedded.directory
+        self.dataframe = self.embedded.embedded_dataframe
+        self.X = self.embedded.coverage_values
+
+        if train:
+            self.y = self.embedded.classified_values
+    
+  
         self.fit_data()
+        self.save_model()
 
     def fit_data(self):
         '''
@@ -72,8 +73,5 @@ class Classifier:
         else:
             self.model.apply(self.X)
 
-
-
-
-
-
+    def save_model(self):
+        joblib.dump(self.model, os.path.join(self.directory, 'model.dat'))

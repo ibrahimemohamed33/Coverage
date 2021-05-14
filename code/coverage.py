@@ -7,8 +7,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
 from mock_training_data import MockData
 from manual import AdjustClassification 
+
+# defines epsilon > 0
+epsilon = 1e-6
 
 
 def adjust_columns(dataframe, mock):
@@ -24,8 +28,7 @@ class Coverage:
     def __init__(self, 
                 directory=os.getcwd(), 
                 norm=True,
-                sort=False, 
-                filter=0,
+                filter=epsilon,
                 coverage_values_file='Untitled.txt',
                 file_included_in_directory=False,
                 index='gene_callers_id', 
@@ -45,8 +48,6 @@ class Coverage:
 
             norm (bool): whether values within a metagenome sample should be normalized, where the 
                          norm is defined as a_i/(∑ a_j)
-
-            sort (bool): whether the coverage values should be sorted by column
 
             filter (int): whether some samples should be filtered out
 
@@ -104,7 +105,6 @@ class Coverage:
             
         self.load_dataframe(
                         norm=norm,
-                        sort=sort,
                         index=index,
                         create_folder=create_folder,
                         export_file=export_file,
@@ -182,7 +182,7 @@ class Coverage:
             )
    
 
-    def load_dataframe(self, norm, sort,  index, create_folder, export_file,
+    def load_dataframe(self, norm, index, create_folder, export_file,
                        file_included_in_directory, mock=False):
         '''
         Loads the dataframe and includes coverage values of genes within samples
@@ -196,13 +196,10 @@ class Coverage:
             )
         
         df = df.set_index(index)
-        if sort:
-            df = df.sort_values(by=list(df.columns), axis=0)
-
         self.dataframe = df
 
 
-    def filter_samples(self, filter=0):
+    def filter_samples(self, filter=epsilon):
         '''
         Filters samples in a pandas dataframe based on filter value
 
@@ -222,7 +219,8 @@ class Coverage:
             coverage_df = self.dataframe.drop('Classification', axis=1)
 
             if norm: 
-                coverage_df = coverage_df/coverage_df.sum()
+                # normalizes dataframe by sum 
+                coverage_df = coverage_df/(coverage_df.sum() + epsilon)
 
             self.classified_values_dataframe = classified_df
             self.coverage_values_dataframe = coverage_df
