@@ -17,6 +17,7 @@ def adjust_columns(dataframe, mock):
     return t.transpose()
 
 
+
 class Embedding:
     def __init__(self, 
                 n_neighbors, 
@@ -60,12 +61,15 @@ class Embedding:
                                 create_folder=False,
                                 folder_name=folder_name,
                                 separator=separator)       
-
+    
         self.dataframe = self.coverage.coverage_values_dataframe
-        self.coverage_values_file = self.coverage.coverage_values_file
-        self.classified_values_file = self.coverage.classified_values_file_name
 
-        
+        if mock:
+            self.coverage_values_file = self.coverage.coverage_values_file
+        else:
+            self.coverage_values_file = 'new_' + self.coverage.coverage_values_file
+
+        self.classified_values_file = self.coverage.classified_values_file_name
 
         _, self.dimension = self.dataframe.shape
         self.num_components = self.projected_number_of_components()        
@@ -166,7 +170,7 @@ class Embedding:
             'gene__reduced_%d' %(i) for i in self.dataframe.index
         ]
         
-        index_name = 'Reduced_' + self.dataframe.index.name
+        index_name = self.dataframe.index.name
 
         return index_name, reduced_indices
 
@@ -196,15 +200,36 @@ class Embedding:
         for manual classification
         '''
         
-        self.embedded_coverage_values_file = 'embedded_' + self.coverage_values_file
-        self.embedded_classified_values_file = 'embedded_' + self.classified_values_file
-        shutil.copyfile(self.classified_values_file, self.embedded_classified_values_file)
+        # defines the new files for which the data will be written in
+        New_Name = lambda string: 'embedded_' + string
+        self.embedded_coverage_values_file = New_Name(self.coverage_values_file)
+        self.embedded_classified_values_file = New_Name(self.classified_values_file)
+
+
+        classified_directory = os.path.join(self.directory, self.classified_values_file)
+        
+
+        # copies content within classification values for the classification 
+        # of the embedded dataframe
+        shutil.copyfile(classified_directory, self.embedded_classified_values_file)
+
         # exports dataframe
+
+        abs_path = lambda path: os.path.abspath(self.directory)
         if export_file:
-            if os.path.exists(os.path.join(os.path.abspath(self.directory), self.embedded_coverage_values_file)):
-                os.remove(os.path.join(os.path.abspath(self.directory), self.embedded_coverage_values_file))
+            # removes any previous copies from directory  
+            if os.path.exists(os.path.join(abs_path(self.directory), self.embedded_coverage_values_file)):
+                os.remove(os.path.join(abs_path(self.directory), self.embedded_coverage_values_file))
+
+            if os.path.exists(os.path.join(abs_path(self.directory), self.embedded_classified_values_file)):
+                os.remove(os.path.join(abs_path(self.directory), self.embedded_classified_values_file))
+
+            
+            # uses helper function to adjust the dataframe's columns for anvio
             df = adjust_columns(self.embedded_dataframe, mock)
             df.to_csv(self.embedded_coverage_values_file , sep='\t')
+
+            # moves the files to the new directory
             shutil.move(self.embedded_coverage_values_file , os.path.abspath(self.directory))
             shutil.move(self.embedded_classified_values_file, os.path.abspath(self.directory))
 

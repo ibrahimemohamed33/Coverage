@@ -68,8 +68,9 @@ class AdjustDataframe:
         self.adjust(coverage_values_file)
     
     def adjust(self, coverage_values_file):
+        self.dataframe = self.dataframe.set_index('gene_callers_id')
+        
         self.dataframe.reindex(self.genes)
-        self.dataframe = self.dataframe.set_index('Reduced_gene_callers_id')
         self.dataframe.to_csv(
            self.coverage_values_file, sep='\t'
         )

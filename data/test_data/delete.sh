@@ -1,1 +1,1 @@
-rm new_classified_values.txt embedded_classified_values.txt classified_classified_values.txt tree.txt 
+rm new_classified_values.txt embedded_classified_values.txt classified_classified_values.txt tree.txt embedded_classified_classified_values.txt embedded_new_classified_values.txt

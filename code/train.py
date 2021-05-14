@@ -8,12 +8,16 @@ class Train:
     Class is helpful for running and training the data itself
     '''
     def __init__(self, directory, coverage_values_file, 
-                classified_values_file, tree_file, title):
+                classified_values_file, tree_file, title=None):
 
         self.directory = directory
         self.coverage_values_file = coverage_values_file
         self.classified_values_file = classified_values_file
         self.tree_file = tree_file
+        self.train = True
+
+        self.adjusted_dataframe_and_classification(title)
+
 
     def is_tree_file_OK(self):
         if not os.path.exists(os.path.join(self.directory, self.tree_file)):
@@ -62,11 +66,11 @@ class Train:
                     --title '%s' \
                     --tree %s \
                     --manual
-                """ %(self.embedded_coverage_values_file, title, self.tree_file)
+                """ %(self.coverage_values_file, title, self.tree_file)
 
         os.system(string)
 
-    def adjusted_dataframe_and_classification(self):
+    def adjusted_dataframe_and_classification(self, title):
         '''
         Adjusts training data so that the coverage values are clustered, 
         using anvio clustering algorithm, and the dataframe is sorted 
@@ -80,10 +84,10 @@ class Train:
             self.F = AdjustClassification(
                                     tree_file=self.tree_file, 
                                     directory=self.directory,
-                                    coverage_values_file=self.embedded_coverage_values_file,
+                                    coverage_values_file=self.coverage_values_file,
                                     classified_values_file=self.classified_values_file)
             
-            self.embedded_dataframe = self.F.dataframe
+            self.dataframe = self.F.dataframe
 
             print(
                 """Now we will open up the excel file so you can input the 
@@ -92,7 +96,8 @@ class Train:
 
             print("Opening up the Excel spreadsheet\n")
             path_to_excel = '/Applications/Microsoft Excel.app'
-            path_to_file = os.path.join(self.directory, self.embedded_coverage_values_file)
+            path_to_file = os.path.join(self.directory, self.coverage_values_file)
+            print(path_to_file)
             string = "open -a '%s' '%s'" %(path_to_excel, path_to_file)
             os.system(string)
 
@@ -115,15 +120,14 @@ class Train:
     def convert_data(self):
         '''
         Using the sorted data and manually classified values, this adjusts the
-        embedded data before it is used to train the model.
-        You will need to run this in your ipython shell after instantiating
-        the Embedding class. 
+        data before it is used to train the model.
+
         '''
         if self.train:
             self.adjusted_dataframe_and_classification()
 
         numpy = lambda dataframe: dataframe.to_numpy()
-        self.coverage_values = numpy(self.embedded_dataframe)
+        self.coverage_values = numpy(self.dataframe)
         if self.classified_values_dataframe is not None:
             self.classified_values = numpy(self.classified_values_dataframe)
     
