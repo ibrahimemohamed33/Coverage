@@ -35,15 +35,13 @@ class Embedding:
                 norm=True, 
                 _filter=epsilon, 
                 rows=100, 
-                columns=100,
-                tree_file='tree.txt'):
+                columns=100):
         '''
         Class attempts to embed high-dimensional coverage values
         into lower dimension using the Isomap algorithm
         '''
-        self.train = train
-        self.tree_file = tree_file
 
+        self.train = train
         self.directory = directory
         self.folder_name = folder_name
 
@@ -151,23 +149,29 @@ class Embedding:
         Embeds d-dimensional data into n-dimensional data, where n <= d
         and n represents the number of components
         '''
-        self.inclusion_map()
-        embedding = manifold.Isomap(
-                n_neighbors=n_neighbors,
-                n_components=self.num_components,
-                path_method=path_method
-            )
-        if mock:
-            t = embedding.fit_transform(self.dataframe[:])
-        else:
-            fit = embedding.fit(self.dataframe[:])
-            t = fit.transform(self.dataframe[:])
 
-        return t
+        if self.num_components == self.dimension:
+            return self.dataframe.to_numpy
+        
+        else:
+            
+            self.inclusion_map()
+            embedding = manifold.Isomap(
+                    n_neighbors=n_neighbors,
+                    n_components=self.num_components,
+                    path_method=path_method
+                )
+            if mock:
+                t = embedding.fit_transform(self.dataframe[:])
+            else:
+                fit = embedding.fit(self.dataframe[:])
+                t = fit.transform(self.dataframe[:])
+
+            return t
     
     def adjusted_indices(self):
         reduced_indices = [
-            'gene__reduced_%d' %(i) for i in self.dataframe.index
+            'gene__%d' %(i) for i in self.dataframe.index
         ]
         
         index_name = self.dataframe.index.name
@@ -191,8 +195,11 @@ class Embedding:
 
         df[index_name] = reduced_indices
         df = df.set_index(index_name)
+        df = df.abs()
+        df = df/(df.sum() + epsilon)
+        
 
-        return df.abs()
+        return df
     
     def export(self, export_file, mock):
         '''

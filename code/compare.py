@@ -11,7 +11,13 @@ from sklearn import manifold
 
 epsilon = coverage.epsilon
 
-class Verify:
+class Compare:
+    '''
+    Class compares the classification of the embedded data and
+    the classification of the original data. This may involve changing up
+    the algorithms that allow for a lower dimensional embedding of the datasets
+    '''
+
     def __init__(self, 
                 n_neighbors,
                 directory,
@@ -30,11 +36,6 @@ class Verify:
                 rows=100, 
                 columns=100,
                 tree_file='tree.txt'):
-        '''
-        Class verifies whether the classification of the embedded data resembles
-        the classification of the original data. This may involve changing up
-        the algorithms that allow for a lower dimensional embedding of the datasets
-        '''
 
 
         self.embedding = dimension.Embedding(directory=directory,
@@ -59,12 +60,15 @@ class Verify:
         self.coverage_training = training.Train(directory=directory, 
                                                 coverage_values_file=self.embedding.coverage_values_file,
                                                 classified_values_file=self.embedding.classified_values_file,
-                                                tree_file=tree_file)
+                                                tree_file='tree.txt',
+                                                title="Regular Data")
         
         self.embedded_training = training.Train(directory=directory,
                                                 coverage_values_file=self.embedding.embedded_coverage_values_file,
                                                 classified_values_file=self.embedding.embedded_classified_values_file,
-                                                tree_file=tree_file)
+                                                tree_file='tree1.txt',
+                                                title="Embedded Data",
+                                                override=True)
 
         
      

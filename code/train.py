@@ -1,14 +1,18 @@
 import os
 import sys
 
+import colorful as cf
+
 from manual import AdjustClassification 
 
+# for nice formatting
+cf.use_style('monokai')
 class Train:
     '''
-    Class is helpful for running and training the data itself
+    Runs anvio and shell commands to manually classify the data
     '''
     def __init__(self, directory, coverage_values_file, 
-                classified_values_file, tree_file, title=None):
+                classified_values_file, tree_file, title, override=False):
 
         self.directory = directory
         self.coverage_values_file = coverage_values_file
@@ -16,7 +20,7 @@ class Train:
         self.tree_file = tree_file
         self.train = True
 
-        self.adjusted_dataframe_and_classification(title)
+        self.adjusted_dataframe_and_classification(title, override=override)
 
 
     def is_tree_file_OK(self):
@@ -47,8 +51,9 @@ class Train:
                 %(environment)
             )
             sys.exit()
-
-        print("Now running Anvio's matrix-to-newick command\n")
+        os.system("clear")
+        print("\n\n\n")
+        print(cf.blue("Now running Anvio's matrix-to-newick command\n"))
         os.system(
             """ anvi-matrix-to-newick %s \
                          -o %s
@@ -60,7 +65,10 @@ class Train:
             %(self.directory, self.tree_file)
         )
 
-    def launch_anvi_interactive(self, title="Practice Run"):
+    def launch_anvi_interactive(self, title, override):
+        if override:
+            self.tree_file = 'tree.txt'
+
         string = """ anvi-interactive -d %s \
                     -p asdf.db \
                     --title '%s' \
@@ -70,7 +78,7 @@ class Train:
 
         os.system(string)
 
-    def adjusted_dataframe_and_classification(self, title):
+    def adjusted_dataframe_and_classification(self, title, override):
         '''
         Adjusts training data so that the coverage values are clustered, 
         using anvio clustering algorithm, and the dataframe is sorted 
@@ -82,7 +90,7 @@ class Train:
         if self.train:
             self.is_tree_file_OK()
             self.F = AdjustClassification(
-                                    tree_file=self.tree_file, 
+                                    tree_file=self.tree_file,
                                     directory=self.directory,
                                     coverage_values_file=self.coverage_values_file,
                                     classified_values_file=self.classified_values_file)
@@ -90,25 +98,24 @@ class Train:
             self.dataframe = self.F.dataframe
 
             print(
-                """Now we will open up the excel file so you can input the 
-                classified values \n"""
-                )
-
-            print("Opening up the Excel spreadsheet\n")
+                cf.green("""Now we will open up the excel file so you can input the 
+                classified values \n""")
+            )
+            print("\n\n\n")
+            print(cf.green("Opening up '%s' on an Excel spreadsheet\n" %(self.coverage_values_file)))
             path_to_excel = '/Applications/Microsoft Excel.app'
             path_to_file = os.path.join(self.directory, self.coverage_values_file)
-            print(path_to_file)
             string = "open -a '%s' '%s'" %(path_to_excel, path_to_file)
             os.system(string)
 
-            print("Now launching anvio-interactive\n")
-            self.launch_anvi_interactive()
+            print(cf.blue("Now launching anvio-interactive\n"))
+            self.launch_anvi_interactive(title, override)
 
-            print("""
-            Finished! When you are done, make sure to execute the command
+            print(cf.green("""
+            Finished! When you are done classifying each gene, make sure to execute the command
             export_classifier, as outlined in the documentation file in 
             INSERT_LINK \n
-            """)
+            """))
             
     def export_classifier(self):
         '''
