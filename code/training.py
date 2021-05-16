@@ -1,6 +1,7 @@
 import os
 import sys
 
+import pandas as pd
 import colorful as cf
 
 from manual import AdjustClassification 
@@ -24,6 +25,10 @@ class Train:
 
 
     def is_tree_file_OK(self):
+        '''
+        determines if the user has a tree file to perform the hierarchal 
+        clustering
+        '''
         if not os.path.exists(os.path.join(self.directory, self.tree_file)):
             raise FileNotFoundError(
                 """You did not go through the anvio interface to create a newick
@@ -37,6 +42,11 @@ class Train:
             )
     
     def run_anvi_newick_matrix(self):
+        '''
+        Checks whether the environment contains anvio and if it does, it would
+        run important commands on the shell that will load up the dendrogram
+        necessary for manually classifying and training the data
+        '''
         environment = os.getenv('CONDA_DEFAULT_ENV')
         os.chdir(self.directory)
 
@@ -51,21 +61,28 @@ class Train:
                 %(environment)
             )
             sys.exit()
+            
         os.system("clear")
         print("\n\n\n")
         print(cf.blue("Now running Anvio's matrix-to-newick command\n"))
+
+
         os.system(
             """ anvi-matrix-to-newick %s \
                          -o %s
             """
 			%(self.coverage_values_file, self.tree_file)
 	    ) 
+
         print(
             """Finished! If you look at thme directory %s, your tree file will appear as '%s'"""
             %(self.directory, self.tree_file)
         )
 
     def launch_anvi_interactive(self, title, override):
+        '''
+        Launches anvio's interactive's dendrogram
+        '''
         if override:
             self.tree_file = 'tree.txt'
 
@@ -108,19 +125,25 @@ class Train:
             string = "open -a '%s' '%s'" %(path_to_excel, path_to_file)
             os.system(string)
 
-            print(cf.blue("Now launching anvio-interactive\n"))
+            print(cf.blue("""Now launching anvi-interactive. When you are done
+            manually classifying the data, make sure to click CTRL + C to exit
+            out. If the data is already classified, simply press CTRL + C\n"""))
+
             self.launch_anvi_interactive(title, override)
 
-            print(cf.green("""
-            Finished! When you are done classifying each gene, make sure to execute the command
-            export_classifier, as outlined in the documentation file in 
-            INSERT_LINK \n
-            """))
+            print(cf.green("""Finished! By now, you must have a column
+            in your Excel spreadsheet labeled 'Classification' and manually
+            inputted the classifying data for each gene. """))
+            
+            self.export_classifier()
             
     def export_classifier(self):
         '''
-        Adjusts the classification values after user manually inputs it
+        Adjusts the classification values after user manually inputs it.
+        It's very important to run this function AFTER you input the classification
+        variables and save the file.
         '''
+
         self.F.export_classifier(self.classified_values_file)
         self.convert_data()
 
@@ -128,15 +151,12 @@ class Train:
         '''
         Using the sorted data and manually classified values, this adjusts the
         data before it is used to train the model.
-
         '''
         if self.train:
             self.adjusted_dataframe_and_classification()
 
-        numpy = lambda dataframe: dataframe.to_numpy()
-        self.coverage_values = numpy(self.dataframe)
         if self.classified_values_dataframe is not None:
-            self.classified_values = numpy(self.classified_values_dataframe)
+            self.classified_values = self.classified_values_dataframe.to_numpy()
     
 
     

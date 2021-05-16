@@ -1,16 +1,22 @@
 import numpy as np
 import pandas as pd
-import joblib
+import pickle
+
+from dimension import Embedding
+import training
 
 from coverage import epsilon
 from sklearn.ensemble import RandomForestClassifier
-from dimension import Embedding
+
 
 
 class Classifier:
     def __init__(self, 
                 max_depth,
                 directory, 
+                tree_file_name='tree.txt',
+                title='Embedded Values',
+                already_classified=False,
                 n_neighbors=100, 
                 train=True,
                 n_estimators=10,
@@ -28,10 +34,12 @@ class Classifier:
                 _filter=epsilon, 
                 rows=100, 
                 columns=100):
-        
+
+        self.algorithm_filename = 'metagenome-centric_classifier_algorithm.sav'
         self.train = train
         self.n_estimators = n_estimators
         self.max_depth = max_depth
+
         self.embedded = Embedding(n_neighbors, 
                                 directory, 
                                 path=path,
@@ -54,24 +62,49 @@ class Classifier:
         self.X = self.embedded.coverage_values
 
         if train:
-            self.y = self.embedded.classified_values
-    
-  
+            self.train_data(tree_file_name, title)
+
         self.fit_data()
-        self.save_model()
+
+    def train_data(self, tree_file_name, title):
+        '''
+        allows user to manually train the data
+        '''
+        directory=self.embedded.directory
+        coverage_values_file=self.embedded.embedded_coverage_values_file
+        classified_values_file=self.embedded.embedded_classified_values_file
+
+        training_data = training.Train(directory=directory,
+                                       coverage_values_file=coverage_values_file, 
+                                       classified_values_file=classified_values_file, 
+                                       tree_file=tree_file_name, 
+                                       title=title)
+        
+        self.X = training_data.coverage_values
+        self.y = training_data.classified_values
+    
+
+    def save_model(self):
+        pickle.dump(self.model, self.algorithm_filename)
+
+    def load_model(self):
+        return pickle.load(open(self.algorithm_filename, 'wb'))
 
     def fit_data(self):
         '''
         Performs the random forest classifier
         '''
-        
-        self.model = RandomForestClassifier(n_estimators=self.n_estimators,
-                                            max_depth=self.max_depth)
-                                            
+
+        # checks if random forest classifier has already been created 
+        if self.load_model() is None:
+            self.model = RandomForestClassifier(n_estimators=self.n_estimators,
+                                                max_depth=self.max_depth)
+        else:
+            self.model = self.load_model()
+
         if self.train:
             self.model.fit(self.X, self.y)
         else:
             self.model.apply(self.X)
-
-    def save_model(self):
-        joblib.dump(self.model, os.path.join(self.directory, 'model.dat'))
+        
+        self.save_model()

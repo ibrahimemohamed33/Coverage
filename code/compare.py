@@ -4,7 +4,7 @@ import sys
 import coverage
 import dimension
 import manual
-import train as training 
+import training 
 
 from sklearn import manifold
 
@@ -35,7 +35,8 @@ class Compare:
                 _filter=coverage.epsilon, 
                 rows=100, 
                 columns=100,
-                tree_file='tree.txt'):
+                coverage_tree_file='tree.txt',
+                emebedding_tree_file='tree1.txt'):
 
 
         self.embedding = dimension.Embedding(directory=directory,
@@ -60,13 +61,13 @@ class Compare:
         self.coverage_training = training.Train(directory=directory, 
                                                 coverage_values_file=self.embedding.coverage_values_file,
                                                 classified_values_file=self.embedding.classified_values_file,
-                                                tree_file='tree.txt',
+                                                tree_file=coverage_tree_file,
                                                 title="Regular Data")
         
         self.embedded_training = training.Train(directory=directory,
                                                 coverage_values_file=self.embedding.embedded_coverage_values_file,
                                                 classified_values_file=self.embedding.embedded_classified_values_file,
-                                                tree_file='tree1.txt',
+                                                tree_file=embedding_tree_file,
                                                 title="Embedded Data",
                                                 override=True)
 

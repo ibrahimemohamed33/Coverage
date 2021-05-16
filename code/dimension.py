@@ -88,7 +88,7 @@ class Embedding:
         '''
 
         if path not in valid_path_methods:
-            raise Exception(
+            raise ValueError(
                 """Your path method '%s' is not a valid method for the isomapping.
                 What you should do instead is set your path to the keywords
                 'auto' or 'D'. This will likely fix the issue
@@ -151,10 +151,9 @@ class Embedding:
         '''
 
         if self.num_components == self.dimension:
-            return self.dataframe.to_numpy
+            return self.dataframe.to_numpy()
         
         else:
-            
             self.inclusion_map()
             embedding = manifold.Isomap(
                     n_neighbors=n_neighbors,
@@ -212,7 +211,6 @@ class Embedding:
         self.embedded_coverage_values_file = New_Name(self.coverage_values_file)
         self.embedded_classified_values_file = New_Name(self.classified_values_file)
 
-
         classified_directory = os.path.join(self.directory, self.classified_values_file)
         
 
@@ -221,6 +219,7 @@ class Embedding:
         shutil.copyfile(classified_directory, self.embedded_classified_values_file)
 
         # exports dataframe
+        self.coverage_values = self.embedded_dataframe.to_numpy()
 
         abs_path = lambda path: os.path.abspath(self.directory)
         if export_file:
@@ -237,7 +236,8 @@ class Embedding:
             df.to_csv(self.embedded_coverage_values_file , sep='\t')
 
             # moves the files to the new directory
-            shutil.move(self.embedded_coverage_values_file , os.path.abspath(self.directory))
+            shutil.move(self.embedded_coverage_values_file, os.path.abspath(self.directory))
             shutil.move(self.embedded_classified_values_file, os.path.abspath(self.directory))
 
+            
     

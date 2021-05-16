@@ -30,7 +30,7 @@ class Values:
         Returns the manually classified core or accessory dataframes 
         '''
         # filters the dataframe based on whether an entry is core
-        F = lambda n: self.df['Classification'] == n
+        F = lambda n: self.df['Classification'] == n        
         filtered = F(1) if core else F(0)
         return self.df[filtered].drop('Classification', axis=1)
 

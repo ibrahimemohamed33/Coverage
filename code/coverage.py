@@ -11,11 +11,15 @@ import seaborn as sns
 from mock_training_data import MockData
 from manual import AdjustClassification 
 
-# defines epsilon > 0
+# defines epsilon > 0 in the cases where we're inadvertently dividing by 0
 epsilon = 1e-6
 
 
 def adjust_columns(dataframe, mock):
+    '''
+    adjusts the gene_callers_id so any clustering or classifying algorithm
+    does not mistake the IDs with a coverage value
+    '''
     t = dataframe.transpose()
     if mock:
         t.columns = t.columns.astype(str)
@@ -128,7 +132,7 @@ class Coverage:
     def parse_directory(self, directory, coverage_values_file, 
                     file_included_in_directory):
         '''
-        Parses directory and extracts file path and file
+        Parses directory and extracts both the file path and file
         '''
 
         if file_included_in_directory:
@@ -231,6 +235,9 @@ class Coverage:
 
     def create_mock_data(self, train, directory, rows, columns, coverage_values_file, 
                         create_folder, folder_name, index, file_included_in_directory):
+        '''
+        creates the mock data given the parameters
+        '''
         
         _, _directory = self.parse_directory(
                         directory=directory, 
