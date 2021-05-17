@@ -79,7 +79,7 @@ class Embedding:
                 mock=mock
             )
         
-        self.embedded_dataframe = self.embed_into_dataframe()
+        self.embed_into_dataframe()
         self.export(export_file, mock)
     
     def is_path_OK(self, path):
@@ -195,10 +195,14 @@ class Embedding:
         df[index_name] = reduced_indices
         df = df.set_index(index_name)
         df = df.abs()
-        df = df/(df.sum() + epsilon)
-        
+        # df = df
+        # if (df.values < 0).any():
+        #     # ensures positive coverage values
+        #     min_value = abs(np.amin(self.embedded_vectors))
+        #     df = df + min_value
 
-        return df
+        # df = df/df.sum()
+        self.embedded_dataframe = df
     
     def export(self, export_file, mock):
         '''

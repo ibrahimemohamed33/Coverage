@@ -36,7 +36,7 @@ class Compare:
                 rows=100, 
                 columns=100,
                 coverage_tree_file='tree.txt',
-                emebedding_tree_file='tree1.txt'):
+                embedding_tree_file='tree1.txt'):
 
 
         self.embedding = dimension.Embedding(directory=directory,
@@ -62,17 +62,13 @@ class Compare:
                                                 coverage_values_file=self.embedding.coverage_values_file,
                                                 classified_values_file=self.embedding.classified_values_file,
                                                 tree_file=coverage_tree_file,
-                                                title="Regular Data")
+                                                title="Regular Data",
+                                                export=False)
         
         self.embedded_training = training.Train(directory=directory,
                                                 coverage_values_file=self.embedding.embedded_coverage_values_file,
                                                 classified_values_file=self.embedding.embedded_classified_values_file,
                                                 tree_file=embedding_tree_file,
                                                 title="Embedded Data",
-                                                override=True)
-
-        
-     
-        
-
-
+                                                override=True,
+                                                export=False)

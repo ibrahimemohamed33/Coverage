@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 import colorful as cf
 
-from manual import AdjustClassification 
+from manual import AdjustClassification
 
 # for nice formatting
 cf.use_style('monokai')
@@ -12,8 +12,8 @@ class Train:
     '''
     Runs anvio and shell commands to manually classify the data
     '''
-    def __init__(self, directory, coverage_values_file, 
-                classified_values_file, tree_file, title, override=False):
+    def __init__(self, directory, coverage_values_file, classified_values_file,
+                tree_file, title, override=False, export=True):
 
         self.directory = directory
         self.coverage_values_file = coverage_values_file
@@ -21,7 +21,7 @@ class Train:
         self.tree_file = tree_file
         self.train = True
 
-        self.adjusted_dataframe_and_classification(title, override=override)
+        self.adjusted_dataframe_and_classification(title, override=override, export=export)
 
 
     def is_tree_file_OK(self):
@@ -62,7 +62,7 @@ class Train:
             )
             sys.exit()
             
-        os.system("clear")
+        # os.system("clear")
         print("\n\n\n")
         print(cf.blue("Now running Anvio's matrix-to-newick command\n"))
 
@@ -95,7 +95,7 @@ class Train:
 
         os.system(string)
 
-    def adjusted_dataframe_and_classification(self, title, override):
+    def adjusted_dataframe_and_classification(self, title, override, export):
         '''
         Adjusts training data so that the coverage values are clustered, 
         using anvio clustering algorithm, and the dataframe is sorted 
@@ -126,7 +126,7 @@ class Train:
             os.system(string)
 
             print(cf.blue("""Now launching anvi-interactive. When you are done
-            manually classifying the data, make sure to click CTRL + C to exit
+            manually classifying the data, make sure to press CTRL + C to exit
             out. If the data is already classified, simply press CTRL + C\n"""))
 
             self.launch_anvi_interactive(title, override)
@@ -134,8 +134,9 @@ class Train:
             print(cf.green("""Finished! By now, you must have a column
             in your Excel spreadsheet labeled 'Classification' and manually
             inputted the classifying data for each gene. """))
-            
-            self.export_classifier()
+
+            if export:
+                self.export_classifier()
             
     def export_classifier(self):
         '''
@@ -157,6 +158,3 @@ class Train:
 
         if self.classified_values_dataframe is not None:
             self.classified_values = self.classified_values_dataframe.to_numpy()
-    
-
-    

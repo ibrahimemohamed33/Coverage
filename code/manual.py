@@ -10,8 +10,8 @@ class ExtractGenes:
     classifying genes.
     '''
     def __init__(self, directory, tree_file):
-        self.file = tree_file
-        self.directory = os.path.abspath(os.path.join(directory, self.file))
+        self.tree_file = tree_file
+        self.directory = os.path.abspath(os.path.join(directory, self.tree_file))
     
     def extract_genes(self):
         '''
