@@ -12,7 +12,8 @@ from mock_training_data import MockData
 from manual import AdjustClassification 
 
 # defines epsilon > 0 in the cases where we're inadvertently dividing by 0
-epsilon = 1e-6
+# this value was determined by taking the max of all samples manually filtered out
+epsilon = 6e-4
 
 
 def adjust_columns(dataframe, mock):
@@ -113,11 +114,12 @@ class Coverage:
                         create_folder=create_folder,
                         export_file=export_file,
                         file_included_in_directory=file_included_in_directory,
+                        filter=filter,
                         mock=mock
                     )
 
-        if filter > 0:
-            self.dataframe = self.filter_samples(filter)
+        # if filter > 0:
+        #     self.filter_samples(filter)
         
         self.extract_values(
                 train=train, index=index, norm=norm
@@ -187,7 +189,7 @@ class Coverage:
    
 
     def load_dataframe(self, norm, index, create_folder, export_file,
-                       file_included_in_directory, mock=False):
+                       file_included_in_directory, filter=epsilon, mock=False):
         '''
         Loads the dataframe and includes coverage values of genes within samples
         Inputs:
@@ -198,21 +200,25 @@ class Coverage:
         df = pd.read_csv(
                 r"" + path, sep=self.separator, engine='python'
             )
-        
         df = df.set_index(index)
+        df = df/df.sum()
+        if filter > 0:
+            criteria = (df.median() > filter)
+            df = df[criteria.index[criteria]]
+            print(df.columns)
+
         self.dataframe = df
 
 
-    def filter_samples(self, filter=epsilon):
-        '''
-        Filters samples in a pandas dataframe based on filter value
+    # def filter_samples(self, filter=epsilon):
+    #     '''
+    #     Filters samples in a pandas dataframe based on filter value
 
-        Input:
-            filter (float): preferred filter value
-            output (bool): whether the filtered dataframe should be outputted
-        '''
-        criteria = (self.dataframe.median() >= filter)
-        return self.dataframe[criteria.index[criteria]]
+    #     Input:
+    #         filter (float): preferred filter value
+    #         output (bool): whether the filtered dataframe should be outputted
+    #     '''
+        
     
 
     def extract_values(self, train, index, norm):

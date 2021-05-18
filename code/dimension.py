@@ -10,12 +10,12 @@ from sklearn import manifold
 
 
 valid_path_methods = ["auto", "D", "FW"]
+valid_manifold_methods =  ['ISOMAP', 'LLE', 'MDS']
 
 def adjust_columns(dataframe, mock):
     t = dataframe.transpose()
     t.columns = t.columns.astype(str)
     return t.transpose()
-
 
 
 class Embedding:
@@ -35,7 +35,9 @@ class Embedding:
                 norm=True, 
                 _filter=epsilon, 
                 rows=100, 
-                columns=100):
+                columns=100,
+                manifold_method='ISOMAP',
+                count=0):
         '''
         Class attempts to embed high-dimensional coverage values
         into lower dimension using the Isomap algorithm
@@ -76,11 +78,13 @@ class Embedding:
         self.embedded_vectors = self.embed(
                 n_neighbors, 
                 path_method=path, 
-                mock=mock
+                mock=mock,
+                manifold_method=manifold_method,
+                train=train
             )
         
         self.embed_into_dataframe()
-        self.export(export_file, mock)
+        self.export(export_file=export_file, mock=mock, count=count)
     
     def is_path_OK(self, path):
         '''
@@ -94,6 +98,14 @@ class Embedding:
                 'auto' or 'D'. This will likely fix the issue
                 """ 
                 %(path)
+            )
+    def is_manifold_OK(self, manifold_method):
+        if manifold_method not in valid_manifold_methods:
+            raise ValueError(
+                """ It appears your manifold_method '%s' is not a valid manifold
+                method, please choose one from the list of valid_manifolds below:
+                '%s' """
+                %(manifold_method, ''.join(valid_manifold_methods))
             )
     
 
@@ -142,9 +154,25 @@ class Embedding:
                 """
                 %(self.dimension)
             )
-
     
-    def embed(self, n_neighbors, path_method, mock):
+    def extract_manifold(self, manifold_method, n_neighbors, path_method):
+        self.is_manifold_OK(manifold_method)
+        if manifold_method == 'LLE':
+            self.embedding = manifold.LocallyLinearEmbedding(n_components=self.num_components,
+                                                            n_neighbors=n_neighbors)
+
+        elif manifold_method == 'MDS':
+            self.embedding = manifold.MDS(n_components=self.num_components, 
+                                          n_jobs=2,
+                                          eps=epsilon)
+
+        else:
+            self.embedding = manifold.Isomap(n_neighbors=n_neighbors,
+                                            n_components=self.num_components,
+                                            path_method=path_method)
+    
+
+    def embed(self, n_neighbors, path_method, mock, manifold_method, train):
         '''
         Embeds d-dimensional data into n-dimensional data, where n <= d
         and n represents the number of components
@@ -155,15 +183,12 @@ class Embedding:
         
         else:
             self.inclusion_map()
-            embedding = manifold.Isomap(
-                    n_neighbors=n_neighbors,
-                    n_components=self.num_components,
-                    path_method=path_method
-                )
-            if mock:
-                t = embedding.fit_transform(self.dataframe[:])
+            self.extract_manifold(manifold_method, n_neighbors, path_method)
+            
+            if mock or train:
+                t = self.embedding.fit_transform(self.dataframe[:])
             else:
-                fit = embedding.fit(self.dataframe[:])
+                fit = self.embedding.fit(self.dataframe[:])
                 t = fit.transform(self.dataframe[:])
 
             return t
@@ -195,25 +220,19 @@ class Embedding:
         df[index_name] = reduced_indices
         df = df.set_index(index_name)
         df = df.abs()
-        # df = df
-        # if (df.values < 0).any():
-        #     # ensures positive coverage values
-        #     min_value = abs(np.amin(self.embedded_vectors))
-        #     df = df + min_value
 
-        # df = df/df.sum()
         self.embedded_dataframe = df
     
-    def export(self, export_file, mock):
+    def export(self, export_file, mock, count=0):
         '''
         Exports the embededd dataframe into a file containing coverage values
         for manual classification
         '''
         
         # defines the new files for which the data will be written in
-        New_Name = lambda string: 'embedded_' + string
-        self.embedded_coverage_values_file = New_Name(self.coverage_values_file)
-        self.embedded_classified_values_file = New_Name(self.classified_values_file)
+        J = lambda string: 'embedded' + str(count) + '_' + string
+        self.embedded_coverage_values_file = J(self.coverage_values_file)
+        self.embedded_classified_values_file = J(self.classified_values_file)
 
         classified_directory = os.path.join(self.directory, self.classified_values_file)
         
