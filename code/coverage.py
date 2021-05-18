@@ -210,7 +210,6 @@ class Coverage:
         '''
         sorts samples by median values 
         '''
-        print("Now sorting your dataframe's samples...\n")
         median_values = self.dataframe.median()
         transposed = self.dataframe.transpose()
 
@@ -218,8 +217,7 @@ class Coverage:
         transposed = transposed.sort_values(by='Median', axis=0, kind='mergesort', 
                                             ascending=False)
         del transposed['Median']
-        self.dataframe = transposed.transpose()
-        print("Finished!\n")        
+        self.dataframe = transposed.transpose()     
 
 
 

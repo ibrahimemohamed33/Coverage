@@ -62,7 +62,7 @@ class Train:
             )
             sys.exit()
             
-        # os.system("clear")
+        os.system("clear")
         print("\n\n\n")
         print(cf.blue("Now running Anvio's matrix-to-newick command\n"))
 

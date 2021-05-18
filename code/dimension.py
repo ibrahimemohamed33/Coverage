@@ -219,7 +219,7 @@ class Embedding:
 
         df[index_name] = reduced_indices
         df = df.set_index(index_name)
-        df = df.abs()
+        df = df - df.min().min()
 
         self.embedded_dataframe = df
     
@@ -261,6 +261,3 @@ class Embedding:
             # moves the files to the new directory
             shutil.move(self.embedded_coverage_values_file, os.path.abspath(self.directory))
             shutil.move(self.embedded_classified_values_file, os.path.abspath(self.directory))
-
-            
-    

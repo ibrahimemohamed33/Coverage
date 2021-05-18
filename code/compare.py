@@ -90,9 +90,6 @@ class Compare:
 
   
           
-                                    
-        # self.dataframe = self.embedding.dataframe
-        # self.embedded_dataframe = self.embedding.embedded_dataframe
 
         self.coverage_training = training.Train(directory=directory, 
                                                 coverage_values_file=self.embedding.coverage_values_file,
