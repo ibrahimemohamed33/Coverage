@@ -118,9 +118,6 @@ class Coverage:
                         mock=mock
                     )
 
-        # if filter > 0:
-        #     self.filter_samples(filter)
-        
         self.extract_values(
                 train=train, index=index, norm=norm
             )
@@ -205,10 +202,26 @@ class Coverage:
         if filter > 0:
             criteria = (df.median() > filter)
             df = df[criteria.index[criteria]]
-            print(df.columns)
 
         self.dataframe = df
+        self.sort_samples()
  
+    def sort_samples(self):
+        '''
+        sorts samples by median values 
+        '''
+        print("Now sorting your dataframe's samples...\n")
+        median_values = self.dataframe.median()
+        transposed = self.dataframe.transpose()
+
+        transposed['Median'] = median_values
+        transposed = transposed.sort_values(by='Median', axis=0, kind='mergesort', 
+                                            ascending=False)
+        del transposed['Median']
+        self.dataframe = transposed.transpose()
+        print("Finished!\n")        
+
+
 
     def extract_values(self, train, index, norm):
         if train:
