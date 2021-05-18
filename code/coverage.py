@@ -208,18 +208,7 @@ class Coverage:
             print(df.columns)
 
         self.dataframe = df
-
-
-    # def filter_samples(self, filter=epsilon):
-    #     '''
-    #     Filters samples in a pandas dataframe based on filter value
-
-    #     Input:
-    #         filter (float): preferred filter value
-    #         output (bool): whether the filtered dataframe should be outputted
-    #     '''
-        
-    
+ 
 
     def extract_values(self, train, index, norm):
         if train:
