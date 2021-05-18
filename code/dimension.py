@@ -36,8 +36,7 @@ class Embedding:
                 _filter=epsilon, 
                 rows=100, 
                 columns=100,
-                manifold_method='ISOMAP',
-                count=0):
+                manifold_method='ISOMAP'):
         '''
         Class attempts to embed high-dimensional coverage values
         into lower dimension using the Isomap algorithm
@@ -84,7 +83,7 @@ class Embedding:
             )
         
         self.embed_into_dataframe()
-        self.export(export_file=export_file, mock=mock, count=count)
+        self.export(export_file=export_file, mock=mock)
     
     def is_path_OK(self, path):
         '''
@@ -223,14 +222,14 @@ class Embedding:
 
         self.embedded_dataframe = df
     
-    def export(self, export_file, mock, count=0):
+    def export(self, export_file, mock):
         '''
         Exports the embededd dataframe into a file containing coverage values
         for manual classification
         '''
         
         # defines the new files for which the data will be written in
-        J = lambda string: 'embedded' + str(count) + '_' + string
+        J = lambda string: 'embedded' + '_' + string
         self.embedded_coverage_values_file = J(self.coverage_values_file)
         self.embedded_classified_values_file = J(self.classified_values_file)
 

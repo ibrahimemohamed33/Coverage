@@ -52,41 +52,7 @@ class Compare:
                                     folder_name=folder_name,
                                     separator=separator,
                                     manifold_method='ISOMAP')  
-        self.embedding1 = dimension.Embedding(directory=directory,
-                                    n_neighbors=n_neighbors,
-                                    norm=norm,
-                                    _filter=_filter,
-                                    file_name=file_name,
-                                    file_included_in_directory=file_included_in_directory,
-                                    index=index,
-                                    mock=mock,
-                                    rows=rows,
-                                    columns=columns,
-                                    train=train,
-                                    export_file=True,
-                                    create_folder=False,
-                                    folder_name=folder_name,
-                                    separator=separator,
-                                    manifold_method='MDS',
-                                    count=1)  
 
-        self.embedding2 = dimension.Embedding(directory=directory,
-                                    n_neighbors=n_neighbors,
-                                    norm=norm,
-                                    _filter=_filter,
-                                    file_name=file_name,
-                                    file_included_in_directory=file_included_in_directory,
-                                    index=index,
-                                    mock=mock,
-                                    rows=rows,
-                                    columns=columns,
-                                    train=train,
-                                    export_file=True,
-                                    create_folder=False,
-                                    folder_name=folder_name,
-                                    separator=separator,
-                                    manifold_method='LLE',
-                                    count=2)
 
   
           
@@ -106,20 +72,6 @@ class Compare:
                                                 override=True,
                                                 export=False)
 
-        self.embedded_training1 = training.Train(directory=directory,
-                                                coverage_values_file=self.embedding1.embedded_coverage_values_file,
-                                                classified_values_file=self.embedding1.embedded_classified_values_file,
-                                                tree_file=embedding_tree_file,
-                                                title="Embedded Data Using Multidimensional Scaling",
-                                                override=True,
-                                                export=False)
-        self.embedded_training2 = training.Train(directory=directory,
-                                                coverage_values_file=self.embedding2.embedded_coverage_values_file,
-                                                classified_values_file=self.embedding2.embedded_classified_values_file,
-                                                tree_file=embedding_tree_file,
-                                                title="Embedded Data Using Non-Hessian Locally Linear Embedding",
-                                                override=True,
-                                                export=False)
 
        
 
