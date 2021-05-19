@@ -63,10 +63,7 @@ class Train:
             sys.exit()
             
         os.system("clear")
-        print("\n\n\n")
-        print(cf.blue("Now running Anvio's matrix-to-newick command\n"))
-
-
+        print(cf.blue("Now running Anvio's matrix-to-newick command...\n"))
         os.system(
             """ anvi-matrix-to-newick %s \
                          -o %s
@@ -74,10 +71,8 @@ class Train:
 			%(self.coverage_values_file, self.tree_file)
 	    ) 
 
-        print(
-            """Finished! If you look at thme directory %s, your tree file will appear as '%s'"""
-            %(self.directory, self.tree_file)
-        )
+        print("""Finished! If you look at thme directory %s, your tree file will appear as '%s'"""
+            %(self.directory, self.tree_file))
 
     def launch_anvi_interactive(self, title, override):
         '''
@@ -103,40 +98,38 @@ class Train:
         This is, however, only useful for inputting training data into the model.
         '''
         self.run_anvi_newick_matrix()
+        self.is_tree_file_OK()
 
-        if self.train:
-            self.is_tree_file_OK()
-            self.F = AdjustClassification(
-                                    tree_file=self.tree_file,
+        self.F = AdjustClassification(tree_file=self.tree_file,
                                     directory=self.directory,
                                     coverage_values_file=self.coverage_values_file,
                                     classified_values_file=self.classified_values_file)
-            
-            self.dataframe = self.F.dataframe
+    
+        self.dataframe = self.F.dataframe.reindex(self.F.genes)
+        self.dataframe['Classification'] = 0
+        self.dataframe.to_csv(self.coverage_values_file, sep='\t')
+        
+        print(cf.green("""Now we will open up the excel file so you can input the 
+            classified values \n\n\n"""))
 
-            print(
-                cf.green("""Now we will open up the excel file so you can input the 
-                classified values \n""")
-            )
-            print("\n\n\n")
-            print(cf.green("Opening up '%s' on an Excel spreadsheet\n" %(self.coverage_values_file)))
-            path_to_excel = '/Applications/Microsoft Excel.app'
-            path_to_file = os.path.join(self.directory, self.coverage_values_file)
-            string = "open -a '%s' '%s'" %(path_to_excel, path_to_file)
-            os.system(string)
+        print(cf.green("Opening up '%s' on an Excel spreadsheet\n" %(self.coverage_values_file)))
+        path_to_excel = '/Applications/Microsoft Excel.app'
+        path_to_file = os.path.join(self.directory, self.coverage_values_file)
+        string = "open -a '%s' '%s'" %(path_to_excel, path_to_file)
+        os.system(string)
 
-            print(cf.blue("""Now launching anvi-interactive. When you are done
-            manually classifying the data, make sure to press CTRL + C to exit
-            out. If the data is already classified, simply press CTRL + C\n"""))
+        print(cf.blue("""Now launching anvi-interactive. When you are done
+        manually classifying the data, make sure to press CTRL + C to exit
+        out. If the data is already classified, simply press CTRL + C\n"""))
 
-            self.launch_anvi_interactive(title, override)
+        self.launch_anvi_interactive(title, override)
 
-            print(cf.green("""Finished! By now, you must have a column
-            in your Excel spreadsheet labeled 'Classification' and manually
-            inputted the classifying data for each gene. """))
+        print(cf.green("""Finished! By now, you must have a column
+        in your Excel spreadsheet labeled 'Classification' and manually
+        inputted the classifying data for each gene. """))
 
-            if export:
-                self.export_classifier()
+        if export:
+            self.export_classifier()
             
     def export_classifier(self):
         '''

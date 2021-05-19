@@ -69,14 +69,13 @@ class AdjustDataframe:
     
     def adjust(self, coverage_values_file):
         self.dataframe = self.dataframe.set_index('gene_callers_id')
-        
+
         self.dataframe.reindex(self.genes)
         self.dataframe.to_csv(
            self.coverage_values_file, sep='\t'
         )
 
 class AdjustClassification:
-    
     def __init__(self, tree_file, directory, coverage_values_file=None, 
                 classified_values_file=None):
 
@@ -84,6 +83,7 @@ class AdjustClassification:
                                                   directory=directory, 
                                                   coverage_values_file=coverage_values_file)
 
+        self.genes = self.adjusted_dataframe.genes
         self.classified_values_file = os.path.join(directory, classified_values_file)
         self.dataframe = self.adjusted_dataframe.dataframe
     

@@ -74,13 +74,11 @@ class Embedding:
         self.num_components = self.projected_number_of_components()        
         self.is_path_OK(path)
 
-        self.embedded_vectors = self.embed(
-                n_neighbors, 
-                path_method=path, 
-                mock=mock,
-                manifold_method=manifold_method,
-                train=train
-            )
+        self.embedded_vectors = self.embed(n_neighbors, 
+                                          path_method=path, 
+                                          mock=mock,
+                                          manifold_method=manifold_method,
+                                          train=train)
         
         self.embed_into_dataframe()
         self.export(export_file=export_file, mock=mock)

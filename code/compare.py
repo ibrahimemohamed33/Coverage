@@ -33,7 +33,8 @@ class Compare:
                 rows=100, 
                 columns=100,
                 coverage_tree_file='tree.txt',
-                embedding_tree_file='tree1.txt'):
+                embedding_tree_file='tree1.txt',
+                manifold_method='ISOMAP'):
 
 
         self.embedding = dimension.Embedding(directory=directory,
@@ -51,10 +52,10 @@ class Compare:
                                     create_folder=False,
                                     folder_name=folder_name,
                                     separator=separator,
-                                    manifold_method='ISOMAP')  
+                                    manifold_method=manifold_method)  
 
 
-  
+        title = "Embedding Data using the %s algorithm" %(manifold_method)
           
 
         self.coverage_training = training.Train(directory=directory, 
@@ -68,10 +69,10 @@ class Compare:
                                                 coverage_values_file=self.embedding.embedded_coverage_values_file,
                                                 classified_values_file=self.embedding.embedded_classified_values_file,
                                                 tree_file=embedding_tree_file,
-                                                title="Embedded Data Using an Isomap Reduction",
+                                                title=title,
                                                 override=True,
                                                 export=False)
 
-
+        
        
 
