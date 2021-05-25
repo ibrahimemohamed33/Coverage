@@ -68,7 +68,7 @@ class Classifier:
 
     def train_data(self, tree_file_name, title):
         '''
-        allows user to manually train the data
+        Allows user to manually train the data
         '''
         directory=self.embedded.directory
         coverage_values_file=self.embedded.embedded_coverage_values_file
@@ -85,10 +85,18 @@ class Classifier:
     
 
     def save_model(self):
-        pickle.dump(self.model, self.algorithm_filename)
+        '''
+        Saves model to a binary file using pickle
+        '''
+        with open(self.algorithm_filename, 'wb') as f:
+            pickle.dump(self.model, f)
 
     def load_model(self):
-        return pickle.load(open(self.algorithm_filename, 'wb'))
+        '''
+        Loads model to a binary file using pickle
+        '''
+        with open(self.algorithm_filename, 'wb') as f:
+            return pickle.load(open(self.algorithm_filename, 'wb'))
 
     def fit_data(self):
         '''
@@ -96,12 +104,11 @@ class Classifier:
         '''
 
         # checks if random forest classifier has already been created 
-        if self.load_model() is None:
-            self.model = RandomForestClassifier(n_estimators=self.n_estimators,
-                                                max_depth=self.max_depth)
-        else:
+        try:
             self.model = self.load_model()
-
+        except EOFError:
+            self.model = RandomForestClassifier(n_estimators=self.n_estimators,
+                                                max_depth=self.max_depth)            
         if self.train:
             self.model.fit(self.X, self.y)
         else:
